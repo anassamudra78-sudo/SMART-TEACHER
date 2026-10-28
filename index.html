@@ -5370,6 +5370,8 @@ function updateTombolPlatformUI() {
      // =========================================================
         // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
         // =========================================================
+        
+        // 1. NYALAKAN MESIN FIREBASE (WAJIB ADA)
         const firebaseConfig = {
             apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
             authDomain: "smart-teacher-v3.firebaseapp.com",
@@ -5382,15 +5384,14 @@ function updateTombolPlatformUI() {
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        
-        const db = firebase.database();
 
+        // 2. FUNGSI PINDAH-PINDAH FORMULIR
         function toggleForm(mode) {
             const formMasuk = document.getElementById('form-masuk');
             const formDaftar = document.getElementById('form-daftar');
             const errorMsg = document.getElementById('auth-error-msg');
             
-            errorMsg.classList.add('hidden'); // Bersihkan error saat pindah tab
+            errorMsg.classList.add('hidden');
             document.getElementById('login-username').value = '';
             document.getElementById('login-password').value = '';
             document.getElementById('reg-username').value = '';
@@ -5405,6 +5406,7 @@ function updateTombolPlatformUI() {
             }
         }
 
+        // 3. FUNGSI UNTUK TOMBOL "MASUK SEKARANG"
         function prosesLogin() {
             const user = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value.trim();
@@ -5424,7 +5426,6 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                // SOLUSI MUTLAK: Panggil firebase.database() secara langsung tanpa variabel perantara
                 firebase.database().ref('users/' + user).once('value').then((snapshot) => {
                     const akun = snapshot.val();
                     
@@ -5449,6 +5450,7 @@ function updateTombolPlatformUI() {
             }
         }
 
+        // 4. FUNGSI UNTUK TOMBOL "DAFTAR AKUN BARU"
         function prosesDaftar() {
             const user = document.getElementById('reg-username').value.trim();
             const pass = document.getElementById('reg-password').value.trim();
@@ -5468,7 +5470,6 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                // SOLUSI MUTLAK: Panggil firebase.database() secara langsung
                 firebase.database().ref('users/' + user).once('value').then((snapshot) => {
                     if (snapshot.exists()) {
                         errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
@@ -5490,6 +5491,8 @@ function updateTombolPlatformUI() {
                 errorMsg.classList.remove('hidden');
             }
         }
+
+        // 5. FUNGSI BUKA LAYAR UTAMA
         function bukaRuangKelas(username) {
             const loginScreen = document.getElementById('login-screen');
             if (loginScreen) {
