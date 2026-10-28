@@ -5416,7 +5416,6 @@ function updateTombolPlatformUI() {
                 return;
             }
 
-            // PENGAMAN BARU: Validasi agar nama tidak mengandung spasi/simbol yang bikin Firebase crash
             const validRegex = /^[a-zA-Z0-9_]+$/;
             if (!validRegex.test(user)) {
                 errorMsg.innerText = "Gagal! Username hanya boleh huruf, angka, dan garis bawah (_).";
@@ -5425,8 +5424,8 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                // ATURAN 1: Cek apakah user benar-benar ada di database
-                db.ref('users/' + user).once('value').then((snapshot) => {
+                // SOLUSI MUTLAK: Panggil firebase.database() secara langsung tanpa variabel perantara
+                firebase.database().ref('users/' + user).once('value').then((snapshot) => {
                     const akun = snapshot.val();
                     
                     if (!akun) {
@@ -5441,11 +5440,11 @@ function updateTombolPlatformUI() {
                         bukaRuangKelas(user);
                     }
                 }).catch((error) => {
-                    errorMsg.innerText = "Koneksi gagal: " + error.message;
+                    errorMsg.innerText = "Koneksi database gagal: " + error.message;
                     errorMsg.classList.remove('hidden');
                 });
             } catch (err) {
-                errorMsg.innerText = "Karakter tidak valid: " + err.message;
+                errorMsg.innerText = "Sistem Error: " + err.message;
                 errorMsg.classList.remove('hidden');
             }
         }
@@ -5461,7 +5460,6 @@ function updateTombolPlatformUI() {
                 return;
             }
 
-            // PENGAMAN BARU: Validasi ketat
             const validRegex = /^[a-zA-Z0-9_]+$/;
             if (!validRegex.test(user)) {
                 errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
@@ -5470,26 +5468,28 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                // ATURAN 2: Cek apakah nama sudah dipakai orang lain
-                db.ref('users/' + user).once('value').then((snapshot) => {
+                // SOLUSI MUTLAK: Panggil firebase.database() secara langsung
+                firebase.database().ref('users/' + user).once('value').then((snapshot) => {
                     if (snapshot.exists()) {
                         errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
                         errorMsg.classList.remove('hidden');
                     } else {
                         const dataBaru = { username: user, password: pass, dibuatPada: new Date().toISOString() };
-                        db.ref('users/' + user).set(dataBaru).then(() => {
+                        firebase.database().ref('users/' + user).set(dataBaru).then(() => {
                             errorMsg.classList.add('hidden');
                             localStorage.setItem('smart_teacher_user', user);
                             bukaRuangKelas(user);
                         });
                     }
+                }).catch((error) => {
+                    errorMsg.innerText = "Gagal mendaftar: " + error.message;
+                    errorMsg.classList.remove('hidden');
                 });
             } catch (err) {
-                errorMsg.innerText = "Gagal mendaftar: " + err.message;
+                errorMsg.innerText = "Sistem Error: " + err.message;
                 errorMsg.classList.remove('hidden');
             }
         }
-
         function bukaRuangKelas(username) {
             const loginScreen = document.getElementById('login-screen');
             if (loginScreen) {
