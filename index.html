@@ -125,6 +125,9 @@
     <!-- ========================================================= -->
     <!-- LAYAR LOGIN FIREBASE (GOOGLE SIGN-IN) -->
     <!-- ========================================================= -->
+    <!-- ========================================================= -->
+    <!-- LAYAR LOGIN MANDIRI (USERNAME & SANDI PRIVAT) -->
+    <!-- ========================================================= -->
     <div id="login-screen" class="fixed inset-0 bg-slate-950 z-[99999] flex items-center justify-center p-4 transition-opacity duration-500">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] rounded-full bg-brand-500/10 blur-3xl"></div>
@@ -135,23 +138,30 @@
             <img src="logo-pusat.png" class="w-20 h-20 mx-auto rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-6" alt="Logo">
             
             <h2 class="text-2xl font-black text-white tracking-tight mb-1">SMART TEACHER</h2>
-            <p class="text-xs text-brand-400 font-bold tracking-widest uppercase mb-8">Integrated Workspace v3.0</p>
+            <p class="text-xs text-brand-400 font-bold tracking-widest uppercase mb-6">Integrated Workspace v3.0</p>
             
-            <p class="text-sm text-slate-300 mb-8 leading-relaxed">Selamat datang! Silakan masuk menggunakan akun Google Anda untuk mengakses ruang kerja terenkripsi.</p>
-
-            <button onclick="loginDenganGoogle()" id="btn-login-google" class="w-full bg-white hover:bg-slate-100 text-slate-800 font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all transform hover:scale-[1.02] active:scale-95 text-sm flex items-center justify-center">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> 
-                LANJUTKAN DENGAN GOOGLE
-            </button>
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold text-slate-400 mb-1 block">Username / Nama Guru</label>
+                    <input type="text" id="input-username" placeholder="Masukkan username Anda..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-400 mb-1 block">Sandi / PIN Pribadi</label>
+                    <input type="password" id="input-password" placeholder="Masukkan sandi rahasia..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
+                </div>
+                <button onclick="prosesLoginMandiri()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-black py-3.5 px-4 rounded-xl shadow-lg transition-all text-sm mt-2">
+                    MASUK KE RUANG KELAS
+                </button>
+            </div>
             
-            <p id="login-error-msg" class="text-rose-400 text-xs font-bold mt-4 hidden animate-pulse">Gagal masuk. Silakan coba lagi.</p>
+            <p id="login-error-msg" class="text-rose-400 text-xs font-bold mt-4 hidden animate-pulse"></p>
             
-            <div class="mt-8 pt-6 border-t border-slate-700/50">
-                <p class="text-[10px] text-slate-500 font-medium tracking-wide"><i class="fa-solid fa-shield-halved mr-1"></i> SECURED BY FIREBASE AUTH</p>
+            <div class="mt-6 pt-5 border-t border-slate-700/50">
+                <p class="text-[10px] text-slate-500 font-medium tracking-wide"><i class="fa-solid fa-shield-halved mr-1"></i> SECURED BY LOCAL CREDENTIAL SYSTEM</p>
             </div>
         </div>
     </div>
-    <div class="flex h-[100dvh] w-full overflow-hidden bg-slate-900">
+        <div class="flex h-[100dvh] w-full overflow-hidden bg-slate-900">
         
         <!-- SIDEBAR UTAMA -->
         <aside id="sidebar" class="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 transition-all z-30 shadow-2xl border-r border-slate-800 shrink-0">
@@ -5390,108 +5400,46 @@ function updateTombolPlatformUI() {
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
             }
         }
-        // =========================================================
-        // SISTEM AUTENTIKASI GOOGLE YANG AMAN & ANTI-MACET HP
-        // =========================================================
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
-            authDomain: "smart-teacher-v3.firebaseapp.com",
-            projectId: "smart-teacher-v3",
-            storageBucket: "smart-teacher-v3.firebasestorage.app",
-            messagingSenderId: "984725799915",
-            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        const auth = firebase.auth();
-        const provider = new firebase.auth.GoogleAuthProvider();
-
-        // Pemantau status login otomatis
-        auth.onAuthStateChanged((user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if (user) {
-                console.log("Akses Diberikan kepada:", user.displayName);
-                if (loginScreen) {
-                    loginScreen.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => loginScreen.classList.add('hidden'), 500);
-                }
-            } else {
-                if (loginScreen) {
-                    loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-                }
-            }
-        });
-
        // =========================================================
-        // SISTEM GOOGLE AUTH: METODE REDIRECT (PALING AMAN DI HP)
+        // SISTEM LOGIN MANDIRI (USERNAME & SANDI)
         // =========================================================
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
-            authDomain: "smart-teacher-v3.firebaseapp.com",
-            projectId: "smart-teacher-v3",
-            storageBucket: "smart-teacher-v3.firebasestorage.app",
-            messagingSenderId: "984725799915",
-            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        const auth = firebase.auth();
-        const provider = new firebase.auth.GoogleAuthProvider();
-
-        // 1. Tangkap hasil login setelah halaman dialihkan kembali (*redirect*) dari Google
-        auth.getRedirectResult().then((result) => {
-            if (result.user) {
-                console.log("Login Redirect Berhasil:", result.user.displayName);
-            }
-        }).catch((error) => {
-            console.error("Error Redirect:", error);
+        function prosesLoginMandiri() {
+            const user = document.getElementById('input-username').value.trim();
+            const pass = document.getElementById('input-password').value.trim();
             const errorMsg = document.getElementById('login-error-msg');
-            if (errorMsg) {
-                errorMsg.innerText = "Gagal masuk: " + error.message;
+
+            if (!user || !pass) {
+                errorMsg.innerText = "Username dan sandi wajib diisi!";
                 errorMsg.classList.remove('hidden');
+                return;
             }
-        });
 
-        // 2. Pantau status login pengguna
-        auth.onAuthStateChanged((user) => {
-            const loginScreen = document.getElementById('login-screen');
-            if (user) {
-                if (loginScreen) {
-                    loginScreen.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => loginScreen.classList.add('hidden'), 500);
-                }
-            } else {
-                if (loginScreen) {
-                    loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-                }
-            }
-        });
+            errorMsg.classList.add('hidden');
 
-        // 3. Tombol Eksekusi Menggunakan Redirect
-        function loginDenganGoogle() {
-            const btn = document.getElementById('btn-login-google');
-            if (btn) {
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
-                btn.disabled = true;
-            }
-            auth.signInWithRedirect(provider).catch((error) => {
-                console.error("Gagal Login:", error);
-                alert("Gagal masuk: " + error.message);
-                if (btn) {
-                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
-                    btn.disabled = false;
-                }
-            });
+            // Simpan sesi lokal di perangkat pengguna
+            localStorage.setItem('smart_teacher_user', user);
+            bukaRuangKelas(user);
         }
-        
+
+        function bukaRuangKelas(username) {
+            const loginScreen = document.getElementById('login-screen');
+            if (loginScreen) {
+                loginScreen.style.opacity = '0';
+                loginScreen.style.pointerEvents = 'none';
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                }, 300);
+            }
+            console.log("Masuk ke ruang kelas privat:", username);
+        }
+
+        // Cek otomatis saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('smart_teacher_user');
+            if (savedUser) {
+                bukaRuangKelas(savedUser);
+            }
+        });
           </script>
    <!-- MODAL KELOLA BANK SOAL -->
 <div id="bank-soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[87] hidden flex items-center justify-center p-4 transition-all no-print">
