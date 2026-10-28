@@ -3,14 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMART TEACHER - Game Show Edition v2.0</title>
+    <title>SMART TEACHER - Integrated Workspace v3.0</title>
+    <!-- Ikon Khusus Aplikasi Pusat (Putih-Hijau) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="logo-pusat.png">
+    <link rel="apple-touch-icon" href="logo-pusat.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Smart Teacher">
+    <meta name="application-name" content="Smart Teacher">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- FIREBASE SDK (Sistem Cloud & Keamanan) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -101,17 +110,56 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased transition-colors duration-300">
 
-    <div class="flex h-screen w-screen overflow-hidden">
+<!-- LAYAR LOADING AWAL (ANTI-BLANK) -->
+    <style>
+        #app-preloader { position: fixed; inset: 0; background: #0f172a; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.6s ease; }
+        .spinner-st { border: 4px solid rgba(255,255,255,0.1); border-left-color: #10b981; border-radius: 50%; width: 45px; height: 45px; animation: putar 1s linear infinite; margin-bottom: 20px; }
+        @keyframes putar { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <div id="app-preloader">
+        <div class="spinner-st"></div>
+        <h2 style="font-family: sans-serif; font-weight: 900; margin: 0; font-size: 20px; letter-spacing: 2px;">SMART TEACHER</h2>
+        <p style="font-family: sans-serif; font-size: 12px; color: #94a3b8; margin-top: 8px;">Mempersiapkan Ruang Kelas...</p>
+    </div>
+    <!-- ============================== -->
+    <!-- ========================================================= -->
+    <!-- LAYAR LOGIN FIREBASE (GOOGLE SIGN-IN) -->
+    <!-- ========================================================= -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 z-[99999] flex items-center justify-center p-4 transition-opacity duration-500">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] rounded-full bg-brand-500/10 blur-3xl"></div>
+            <div class="absolute top-[60%] -right-[10%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 blur-3xl"></div>
+        </div>
+
+        <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 rounded-[2.5rem] shadow-2xl p-8 lg:p-12 w-full max-w-md relative z-10 text-center transform transition-all">
+            <img src="logo-pusat.png" class="w-20 h-20 mx-auto rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-6" alt="Logo">
+            
+            <h2 class="text-2xl font-black text-white tracking-tight mb-1">SMART TEACHER</h2>
+            <p class="text-xs text-brand-400 font-bold tracking-widest uppercase mb-8">Integrated Workspace v3.0</p>
+            
+            <p class="text-sm text-slate-300 mb-8 leading-relaxed">Selamat datang! Silakan masuk menggunakan akun Google Anda untuk mengakses ruang kerja terenkripsi.</p>
+
+            <button onclick="loginDenganGoogle()" id="btn-login-google" class="w-full bg-white hover:bg-slate-100 text-slate-800 font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all transform hover:scale-[1.02] active:scale-95 text-sm flex items-center justify-center">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> 
+                LANJUTKAN DENGAN GOOGLE
+            </button>
+            
+            <p id="login-error-msg" class="text-rose-400 text-xs font-bold mt-4 hidden animate-pulse">Gagal masuk. Silakan coba lagi.</p>
+            
+            <div class="mt-8 pt-6 border-t border-slate-700/50">
+                <p class="text-[10px] text-slate-500 font-medium tracking-wide"><i class="fa-solid fa-shield-halved mr-1"></i> SECURED BY FIREBASE AUTH</p>
+            </div>
+        </div>
+    </div>
+    <div class="flex h-[100dvh] w-full overflow-hidden bg-slate-900">
         
         <!-- SIDEBAR UTAMA -->
         <aside id="sidebar" class="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 transition-all z-30 shadow-2xl border-r border-slate-800 shrink-0">
             <div class="flex items-center space-x-3 px-6 py-5 border-b border-white/10 bg-white/5 backdrop-blur-md">
-                <div class="bg-gradient-to-br from-brand-400 to-brand-600 text-white p-2.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.6)] ring-2 ring-brand-400/30">
-                    <i class="fa-solid fa-graduation-cap text-lg drop-shadow"></i>
-                </div>
+                <img src="logo-pusat.png" class="w-11 h-11 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.4)]" alt="Logo Smart Teacher">
                 <div>
                     <h1 class="font-extrabold text-lg tracking-tight text-white drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">SMART TEACHER</h1>
-                    <p class="text-[10px] text-amber-300 uppercase tracking-widest font-semibold">Game Show Edition v2.0</p>
+                    <p class="text-[10px] text-amber-300 uppercase tracking-widest font-semibold">Integrated Workspace v3.0</p>
                 </div>
             </div>
             
@@ -120,7 +168,7 @@
             <!-- FOOTER SIDEBAR -->
             <div class="mt-auto pt-3 pb-2 border-t border-slate-700/50 text-center">
                 <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">
-                    SMART TEACHER v2.0 Game Show
+                    SMART TEACHER v3.0 Integrated Workspace
                 </p>
                 <p class="text-[11px] text-slate-300 font-semibold mt-0.5">
                     Dev: Muh. Nashir, S.Pd. <span class="text-purple-400 font-normal">(Anas Samudra H2A)</span>
@@ -129,7 +177,7 @@
                     Powered by <span class="text-cyan-400 font-medium">Gemini AI</span>
                 </p>
             </div>
-
+            
             <div class="p-4 border-t border-white/10 bg-black/20 flex items-center justify-between">
                 <div class="flex items-center space-x-3 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
                     <div class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></div>
@@ -176,7 +224,7 @@
             <div id="mobile-drawer" class="fixed inset-y-0 left-0 w-72 bg-slate-900 text-slate-100 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
                 <div class="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/5">
                     <div class="flex items-center space-x-3">
-                        <div class="bg-brand-500 text-white p-2 rounded-xl shadow-lg shadow-brand-500/40"><i class="fa-solid fa-graduation-cap"></i></div>
+                        <img src="logo-pusat.png" class="w-8 h-8 rounded-lg shadow-md" alt="Logo Smart Teacher">
                         <h1 class="font-extrabold text-base text-white">SMART TEACHER</h1>
                     </div>
                     <button onclick="toggleMobileMenu(true)" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -185,7 +233,7 @@
                 
                 <div class="mt-auto pt-4 pb-2 border-t border-slate-700/50 text-center">
                     <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">
-                        SMART TEACHER v2.0 Game Show
+                        SMART TEACHER v3.0 Integrated Workspace
                     </p>
                     <p class="text-[11px] text-slate-300 font-semibold mt-0.5">
                         Dev: Muh. Nashir, S.Pd. <span class="text-purple-400 font-normal">(Anas Samudra H2A)</span>
@@ -208,16 +256,17 @@
         <!-- Isi Laci Tombol (Bersembunyi di luar layar) -->
         <div class="bg-slate-900/95 backdrop-blur-md shadow-2xl border-y border-l border-slate-700 rounded-l-2xl p-3 flex flex-col gap-3">
             
-            <button onclick="bukaScannerGlobal(); toggleEdgePanel();" title="Scanner Absensi" class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
-                <i class="fa-solid fa-qrcode"></i>
-            </button>
-            
             <button onclick="switchTab('kuis'); toggleEdgePanel();" title="Kuis Interaktif" class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
                 <i class="fa-solid fa-gamepad"></i>
             </button>
             
             <button onclick="switchTab('ai'); toggleEdgePanel();" title="Asisten AI Guru" class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
                 <i class="fa-solid fa-robot"></i>
+            </button>
+
+            <!-- Pintasan Presentation Studio -->
+            <button onclick="switchTab('presentation_studio'); toggleEdgePanel();" title="Presentation Studio" class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
+                <i class="fa-solid fa-person-chalkboard"></i>
             </button>
             
         </div>
@@ -502,6 +551,7 @@
                 storageKey: 'SmartTeacher_DB',
                 apiKeyStorage: 'ST_GEMINI_API_KEY',
                 gasUrl: localStorage.getItem('ST_GAS_URL') || '',
+                gatewayUrl: localStorage.getItem('ST_GATEWAY_URL') || '',
                 kunciApiPermanen: ""
             },
             ui: {
@@ -561,7 +611,7 @@
         };
 
         // Inisialisasi Objek Audio MP3
-        AppState.audio.elements.bgm = new Audio(AppState.audio.customUrls.bgm);
+        AppState.audio.elements.bgm = new Audio(AppState.audio.customUrls.bgm);    
         AppState.audio.elements.bgm.loop = true;
         AppState.audio.elements.correct = new Audio(AppState.audio.customUrls.correct);
         AppState.audio.elements.wrong = new Audio(AppState.audio.customUrls.wrong);
@@ -709,6 +759,7 @@ document.addEventListener('click', function unlockAudioMode() {
                 items: [
                     { id: 'kuis', title: 'Kuis & Bank Soal', icon: 'fa-gamepad', sub: 'Game Show, Podium & Duel' },
                     { id: 'ai', title: 'Asisten AI Guru', icon: 'fa-robot', sub: 'Generator Soal, Kuis & ATP' },
+{ id: 'presentation_studio', title: 'Presentation Studio', icon: 'fa-person-chalkboard', sub: 'Generator Prompt Presentasi' },
                     { id: 'pengaturan', title: 'Pengaturan & Backup', icon: 'fa-gear', sub: 'Sistem & Database' }
                 ]
             }
@@ -745,33 +796,40 @@ document.addEventListener('click', function unlockAudioMode() {
         }
 
         async function saveDatabase() {
-    // 1. Simpan ke penyimpanan lokal HP/Browser (Selalu prioritas utama)
-    localStorage.setItem(AppState.config.storageKey, JSON.stringify(AppState.db));
-    updateUI();
+            // 1. Simpan ke penyimpanan lokal HP/Browser (Selalu prioritas utama)
+            localStorage.setItem(AppState.config.storageKey, JSON.stringify(AppState.db));
+            updateUI();
 
-    // 2. Simpan ke Google Sheets (Online) - Pendekatan Fire and Forget
-    if (AppState.config.gasUrl && AppState.config.gasUrl.startsWith("http")) {
-        try {
-            // Menggunakan mode 'no-cors' adalah satu-satunya cara aman untuk menembus
-            // blokir preflight Google Apps Script murni dari sisi klien.
-            fetch(AppState.config.gasUrl, {
-                method: "POST",
-                mode: "no-cors", 
-                headers: { 
-                    "Content-Type": "text/plain;charset=utf-8" 
-                },
-                body: JSON.stringify(AppState.db)
-            }).then(() => {
-                console.log("Data terkirim ke Cloud (Opaque Response).");
-            }).catch(err => {
-                console.error("Gagal menjangkau Cloud:", err);
-            });
-        } catch (e) { 
-            console.error("Kesalahan fungsi Cloud:", e); 
+            // 2. Simpan ke Google Sheets (Online) dengan Radar Validasi Respons
+            if (AppState.config.gasUrl && AppState.config.gasUrl.startsWith("http")) {
+                try {
+                    console.log("Mencoba sinkronisasi ke Cloud...");
+
+                    const response = await fetch(AppState.config.gasUrl, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "text/plain;charset=utf-8" 
+                        },
+                        body: JSON.stringify(AppState.db)
+                    });
+
+                    // Tangkap surat balasan dari Google Sheets
+                    const result = await response.json();
+
+                    if (result.status === "success") {
+                        console.log("Sinkronisasi Cloud Berhasil:", result.message);
+                    } else {
+                        console.error("Server Google menolak:", result.message);
+                        showAlert("Gagal Sinkron Cloud", "Ada masalah di kode Google Sheets: " + result.message, "error");
+                    }
+
+                } catch (err) { 
+                    console.error("Gagal menjangkau Cloud:", err); 
+                    showAlert("Koneksi Terputus", "Data tersimpan aman di HP, tapi gagal dikirim ke Google Sheets. Pastikan internet lancar.", "error");
+                }
+            }
         }
-    }
-}
-
+        
         function forceSaveNotification() {
             saveDatabase();
             showAlert("Berhasil", "Data berhasil disimpan.", "success");
@@ -831,12 +889,12 @@ document.addEventListener('click', function unlockAudioMode() {
                         : 'text-slate-400 hover:bg-white/5 hover:text-white';
                     
                     let extraColor = '';
-                    if (!isActive) {
-                        if (item.id === 'ai') extraColor = 'text-purple-400';
-                        if (item.id === 'kuis') extraColor = 'text-amber-400';
-                        if (item.id === 'jadwal') extraColor = 'text-cyan-400';
-                    }
-
+if (!isActive) {
+    if (item.id === 'ai') extraColor = 'text-purple-400';
+    if (item.id === 'kuis') extraColor = 'text-amber-400';
+    if (item.id === 'jadwal') extraColor = 'text-cyan-400';
+    if (item.id === 'presentation_studio') extraColor = 'text-emerald-500'; // <-- Tambahkan baris ini
+}
                     htmlContent += `
                         <button onclick="switchTab('${item.id}')" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-all text-left ${activeClass}">
                             <div class="w-5 flex justify-center ${extraColor}"><i class="fa-solid ${item.icon}"></i></div>
@@ -1091,7 +1149,8 @@ function escapeHTML(str) {
             else if (tabId === 'rapor') renderRapor(container);
             else if (tabId === 'kuis') renderKuisPage(container);
             else if (tabId === 'ai') renderAI(container);
-            else if (tabId === 'pengaturan') renderPengaturan(container);
+else if (tabId === 'presentation_studio') renderPresentationStudio(container);
+else if (tabId === 'pengaturan') renderPengaturan(container);
         }
 
         function renderDashboard(container) {
@@ -1165,7 +1224,7 @@ function escapeHTML(str) {
                     <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 rounded-3xl p-6 lg:p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-brand-500 rounded-full blur-3xl opacity-20"></div>
                         <div class="z-10 text-center md:text-left">
-                            <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Game Show Edition v2.0</span>
+                            <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">Integrated Workspace v3.0</span>
                             <h3 class="text-2xl lg:text-3xl font-black mt-2 mb-1.5">Selamat Datang di Smart Teacher</h3>
                             <p class="text-slate-300 text-xs lg:text-sm max-w-md">Kelola administrasi akademik, jadwal mengajar harian, dan mainkan kuis interaktif dengan Panggung Podium Top 3!</p>
                         </div>
@@ -1211,7 +1270,22 @@ function escapeHTML(str) {
                             </button>
                         </div>
                     </div>
-
+<!-- KARTU PINTASAN SMART GATEWAY -->
+<div class="bg-slate-800/80 dark:bg-slate-900/80 border border-slate-700/60 rounded-2xl p-5 mb-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg backdrop-blur-md">
+    <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-network-wired"></i>
+        </div>
+        <div>
+            <h4 class="text-base font-bold text-white">Smart Gateway Station</h4>
+            <p class="text-xs text-slate-400">Pusat absensi modern berbasis Face Recognition & QR Code terintegrasi</p>
+        </div>
+    </div>
+    <a href="https://anassamudra78-sudo.github.io/Gateway-Station/" target="_blank" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-semibold text-xs flex items-center space-x-2 transition-all shadow-md shrink-0">
+        <span>Buka Gateway</span>
+        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+    </a>
+</div>
                     <div onclick="openGuideModal()" class="cursor-pointer bg-white dark:bg-slate-900 hover:border-amber-500/40 rounded-2xl px-5 py-3.5 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all group">
                         <div class="flex items-center space-x-3">
                             <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -1227,6 +1301,7 @@ function escapeHTML(str) {
                         </button>
                     </div>
                 </div>
+               
             `;
 
             if (AppState.ui.dashboardClockInterval) clearInterval(AppState.ui.dashboardClockInterval);
@@ -1372,6 +1447,7 @@ function escapeHTML(str) {
                         <td class="py-4 px-4 text-sm font-bold text-slate-500">${idx+1}</td>
                         ${tdFields}
                         <td class="py-4 px-4 text-right whitespace-nowrap">
+                            ${type === 'siswa' ? `<button onclick="lihatQRSiswa('${item.id}')" title="Lihat QR Code" class="text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 py-2.5 px-3.5 rounded-xl transition-all mr-1"><i class="fa-solid fa-qrcode text-base"></i></button>` : ''}
                             <button onclick="editCRUD('${type}', '${item.id}')" title="Edit Data" class="text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-950/50 py-2.5 px-3.5 rounded-xl transition-all mr-1"><i class="fa-solid fa-pen-to-square text-base"></i></button>
                             <button onclick="deleteCRUD('${type}', '${item.id}')" title="Hapus Data" class="text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/50 py-2.5 px-3.5 rounded-xl transition-all"><i class="fa-solid fa-trash-can text-base"></i></button>
                         </td>
@@ -1399,7 +1475,7 @@ function escapeHTML(str) {
 
             container.innerHTML = `
                 <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
-                    <div class="w-full lg:w-1/3 bg-white dark:bg-slate-900 rounded-[2rem] shadow-md border border-slate-100 dark:border-slate-800 p-6 sm:p-8 h-fit shrink-0">
+                    <div class="w-full lg:w-1/3 bg-white dark:bg-slate-900 rounded-[2rem] shadow-md border border-slate-100 dark:border-slate-800 p-6 sm:p-8 h-fit shrink-0 lg:sticky lg:top-4 z-20 max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <h4 class="font-black text-lg text-slate-800 dark:text-white mb-6 border-b dark:border-slate-800 pb-4">
                             ${editingItem ? `<i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i>Edit ${config.title}` : `<i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Tambah ${config.title}`}
                         </h4>
@@ -1424,7 +1500,7 @@ function escapeHTML(str) {
                                 <button onclick="openImportModal('${type}')" class="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow-md shadow-purple-500/30 transition-all"><i class="fa-solid fa-file-excel mr-1.5"></i> Impor Excel</button>
                             </div>
                         </div>
-                        <div class="overflow-x-auto p-2 custom-scrollbar max-h-[400px] overflow-y-auto relative">
+                        <div class="overflow-x-auto p-2 custom-scrollbar max-h-[75vh] overflow-y-auto relative">
     <table class="w-full text-left border-collapse min-w-max">
         <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-extrabold sticky top-0 z-10 shadow-sm">
             <tr class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-extrabold">                                        <th class="py-4 px-4 w-12 text-center rounded-l-xl"><input type="checkbox" id="select-all-${type}" onchange="toggleSelectAllCRUD('${type}', this.checked)" class="w-4 h-4 accent-brand-600 rounded cursor-pointer" title="Pilih Semua"></th>
@@ -1610,6 +1686,18 @@ function escapeHTML(str) {
                 <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 lg:p-8 max-w-3xl mx-auto">
                     <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-6 border-b dark:border-slate-800 pb-4"><i class="fa-solid fa-shield-halved text-brand-500 mr-2"></i>Pengaturan Sistem</h3>
                     
+                    <!-- KONEKSI SMART GATEWAY (FITUR BARU) -->
+                    <div class="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
+                        <div class="text-3xl text-cyan-500"><i class="fa-solid fa-satellite-dish"></i></div>
+                        <div class="w-full">
+                            <h4 class="font-bold text-cyan-800 dark:text-cyan-300 text-lg">Koneksi Smart Gateway (Absen Gerbang)</h4>
+                            <p class="text-sm text-cyan-700 dark:text-cyan-400 mb-3 mt-1">Masukkan Tautan (URL JSON) dari mesin absen wajah/QR di gerbang sekolah.</p>
+                            <input type="text" id="setting-gateway-url" value="${AppState.config.gatewayUrl}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-cyan-500 mb-3 dark:text-white">
+                            <button onclick="saveGatewayUrlConfig()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-xl shadow-md text-sm">Simpan Tautan Gateway</button>
+                            ${AppState.config.gatewayUrl ? '<span class="ml-3 text-xs font-bold text-cyan-600 bg-cyan-100 dark:bg-cyan-900 px-3 py-1.5 rounded-lg border border-cyan-200">Tersimpan</span>' : '<span class="ml-3 text-xs font-bold text-rose-500 bg-rose-100 dark:bg-rose-900 px-3 py-1.5 rounded-lg border border-rose-200">Belum Diatur</span>'}
+                        </div>
+                    </div>
+
                     <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
                         <div class="text-3xl text-emerald-500"><i class="fa-solid fa-cloud"></i></div>
                         <div class="w-full">
@@ -1630,7 +1718,7 @@ function escapeHTML(str) {
                         </div>
                     </div>
 
-                    <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
+                    <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 flex items-start space-x-4">
                         <div class="text-3xl text-amber-500"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                         <div class="w-full">
                             <h4 class="font-bold text-slate-800 dark:text-white text-lg">Restore Database (Pemulihan)</h4>
@@ -1653,6 +1741,14 @@ function escapeHTML(str) {
             if(url) saveDatabase(); 
         }
 
+        function saveGatewayUrlConfig() {
+            const url = document.getElementById('setting-gateway-url').value.trim();
+            AppState.config.gatewayUrl = url;
+            localStorage.setItem('ST_GATEWAY_URL', url);
+            showAlert("Berhasil", "Tautan Smart Gateway berhasil disimpan!", "success");
+            renderPengaturan(document.getElementById('main-content'));
+        }
+        
         function backupJSON() {
     // Bungkus seluruh state penting ke dalam satu payload utama
     const fullBackup = {
@@ -1757,9 +1853,9 @@ function restoreJSON() {
             }).join('');
 
             formContainer.innerHTML = `
-                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden fade-in">
+               <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden fade-in relative max-h-[60vh] overflow-y-auto custom-scrollbar">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+                        <thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold sticky top-0 z-10 shadow-sm">
                             <tr><th class="py-4 px-5 text-center">No</th><th class="py-4 px-5">Nama Lengkap Siswa</th><th class="py-4 px-5 text-center w-40">Input Nilai</th></tr>
                         </thead>
                         <tbody>${rows}</tbody>
@@ -1872,7 +1968,7 @@ function restoreJSON() {
 
             container.innerHTML = `
                 <!-- PEMILIHAN PERAN (ROLE) GURU -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 space-y-5">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6 space-y-5 sticky top-0 z-30 shadow-md">
                     <div class="border-b border-slate-100 dark:border-slate-800 pb-4">
                         <label class="text-sm font-black text-slate-800 dark:text-white block mb-3">
                             <i class="fa-solid fa-user-tie text-brand-500 mr-2"></i> Peran Anda Saat Ini:
@@ -1889,18 +1985,28 @@ function restoreJSON() {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div id="wadah-tanggal-absen">
-                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Tanggal</label>
-                            <input type="date" id="abs-tanggal" value="${today}" onchange="loadAbsensi()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none dark:text-white text-sm">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Kelas</label>
-                            <select id="abs-kelas" onchange="loadAbsensi()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none dark:text-white text-sm focus:ring-2 focus:ring-brand-500">
-                                <option value="">-- Pilih Kelas --</option>
-                                ${kelasOpts}
-                            </select>
-                        </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- 1. WADAH TANGGAL (GURU MAPEL) -->
+        <div id="wadah-tanggal-absen">
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Tanggal</label>
+            <input type="date" id="abs-tanggal" value="${today}" onchange="loadAbsensi()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none dark:text-white text-sm">
+        </div>
+        
+        <!-- 2. WADAH BULAN (WALI KELAS - AWALNYA DISEMBUNYIKAN) -->
+        <div id="wadah-bulan-absen" style="display: none;">
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Bulan (Rekap)</label>
+            <input type="month" id="abs-bulan" value="${today.slice(0, 7)}" onchange="loadAbsensi()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none dark:text-white text-sm">
+        </div>
+
+        <!-- 3. WADAH KELAS -->
+        <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">Pilih Kelas</label>
+            <select id="abs-kelas" onchange="loadAbsensi()" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none dark:text-white text-sm focus:ring-2 focus:ring-brand-500">
+                <option value="">-- Pilih Kelas --</option>
+                ${kelasOpts}
+            </select>
+        </div>
+    </div>
                     </div>
                 </div>
                 <div id="absensi-container"></div>
@@ -1916,12 +2022,15 @@ function restoreJSON() {
             const kelasId = document.getElementById('abs-kelas').value;
             const container = document.getElementById('absensi-container');
             const wadahTanggal = document.getElementById('wadah-tanggal-absen');
+        const wadahBulan = document.getElementById('wadah-bulan-absen');
 
-            if (mode === 'walikelas') {
-                wadahTanggal.classList.add('hidden'); 
-            } else {
-                wadahTanggal.classList.remove('hidden');
-            }
+        if (mode === 'walikelas') {
+            wadahTanggal.classList.add('hidden');
+            if (wadahBulan) wadahBulan.style.display = 'block';
+        } else {
+            wadahTanggal.classList.remove('hidden');
+            if (wadahBulan) wadahBulan.style.display = 'none';
+        }
 
             if(!kelasId) { 
                 container.innerHTML = `<p class="text-slate-500 text-center py-10 bg-white dark:bg-slate-900 rounded-3xl border dark:border-slate-800">Pilih kelas untuk menampilkan daftar hadir.</p>`; 
@@ -1950,9 +2059,7 @@ function restoreJSON() {
                         <!-- HEADER TABEL + TOMBOL SCAN -->
                         <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                             <h4 class="font-bold text-slate-800 dark:text-white text-sm"><i class="fa-solid fa-clipboard-user text-brand-500 mr-2"></i> Daftar Hadir</h4>
-                            <button onclick="bukaScannerQR('${tanggal}', '${kelasId}')" class="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all text-xs flex items-center border border-slate-600">
-                                <i class="fa-solid fa-qrcode mr-2 text-emerald-400"></i> Scan ID Card (QR)
-                            </button>
+                            
                         </div>
                         <table class="w-full text-left"><thead class="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider font-bold"><tr><th class="py-4 px-5 text-center w-16">No</th><th class="py-4 px-5">Siswa</th><th class="py-4 px-5">Status Kehadiran</th></tr></thead><tbody>${rows}</tbody></table>
                         <div class="p-5 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-800 flex justify-end">
@@ -1966,7 +2073,11 @@ function restoreJSON() {
                     headerTanggal += `<th class="border border-slate-200 dark:border-slate-700 p-1 min-w-[28px] text-center">${i}</th>`;
                 }
 
-                let currentMonthPrefix = new Date().toISOString().slice(0, 8);
+                let currentMonthPrefix = new Date().toISOString().slice(0, 8); // Default aman
+        const elemenBulan = document.getElementById('abs-bulan');
+        if (elemenBulan && elemenBulan.value) {
+            currentMonthPrefix = elemenBulan.value + '-';
+        }
 
                 let rowsWali = siswaKelas.map((siswa, idx) => {
                     let tdAbsen = "";
@@ -2008,9 +2119,15 @@ function restoreJSON() {
 
                 container.innerHTML = `
                     <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 fade-in">
-                        <div class="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                            <h4 class="font-bold text-slate-800 dark:text-white"><i class="fa-solid fa-calendar-days text-indigo-500 mr-2"></i> Rekap Kehadiran (31 Hari)</h4>
-                            <p class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">Klik pada kotak tanggal untuk mengubah status kehadiran.</p>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <div>
+                                <h4 class="font-bold text-slate-800 dark:text-white"><i class="fa-solid fa-calendar-days text-indigo-500 mr-2"></i> Rekap Kehadiran (31 Hari)</h4>
+                                <p class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg mt-1.5">Klik kotak untuk ubah manual, atau tekan tombol Tarik Data.</p>
+                            </div>
+                            <!-- TOMBOL TARIK DATA GATEWAY -->
+                            <button onclick="tarikDataGateway('${kelasId}')" id="btn-tarik-gateway" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-cyan-500/30 transition-all flex items-center shrink-0">
+                                <i class="fa-solid fa-satellite-dish mr-2 animate-pulse"></i> Tarik Data Smart Gateway
+                            </button>
                         </div>
                         <div class="overflow-x-auto custom-scrollbar pb-3">
                             <table class="w-max min-w-full text-left border-collapse border border-slate-200 dark:border-slate-700">
@@ -2272,7 +2389,7 @@ function restoreJSON() {
                     <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
                     
                     <div class="relative z-10">
-                        <span class="inline-block py-1.5 px-4 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black tracking-widest uppercase mb-4 shadow-inner">Game Show Edition v2.0</span>
+                        <span class="inline-block py-1.5 px-4 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black tracking-widest uppercase mb-4 shadow-inner">INTERACTIVE GAME SHOW</span>
                         
                         <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-slate-400 mb-4 drop-shadow-lg">Arena Kuis Interaktif</h2>
                         
@@ -2706,11 +2823,12 @@ function restoreJSON() {
                 `;
             } else {
                 content += `
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mb-6 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
-                        <button onclick="changeAITab('kuis_ai')" class="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all text-sm ${AppState.ui.aiTab==='kuis_ai'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Generate Kuis AI</button>
-                        <button onclick="changeAITab('soal')" class="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all text-sm ${AppState.ui.aiTab==='soal'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-file-signature mr-2"></i>Buat Naskah Soal Ujian</button>
-                        <button onclick="changeAITab('tp')" class="flex-1 py-2.5 px-4 rounded-xl font-bold transition-all text-sm ${AppState.ui.aiTab==='tp'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-layer-group mr-2"></i>Rumuskan TP & ATP</button>
-                    </div>
+                    <div class="grid grid-cols-2 sm:flex sm:flex-row gap-2 mb-6 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
+                        <button onclick="changeAITab('kuis_ai')" class="flex-1 py-2 px-3 rounded-xl font-bold transition-all text-xs ${AppState.ui.aiTab==='kuis_ai'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Kuis AI</button>
+                        <button onclick="changeAITab('soal')" class="flex-1 py-2 px-3 rounded-xl font-bold transition-all text-xs ${AppState.ui.aiTab==='soal'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-file-signature mr-1"></i>Soal Ujian</button>
+                        <button onclick="changeAITab('tp')" class="flex-1 py-2 px-3 rounded-xl font-bold transition-all text-xs ${AppState.ui.aiTab==='tp'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-layer-group mr-1"></i>TP & ATP</button>
+                   </div>
+    <div id="ai-workspace" class="min-h-[260px]"></div>     
                     <div id="ai-workspace" class="min-h-[260px]"></div>
                 `;
                 setTimeout(() => renderAIWorkspace(), 10);
@@ -2719,7 +2837,6 @@ function restoreJSON() {
             content += `</div>`;
             container.innerHTML = content;
         }
-
         function renderAIWorkspace() {
             const ws = document.getElementById('ai-workspace');
             if(!ws) return;
@@ -2804,9 +2921,8 @@ function restoreJSON() {
                     </div>
                     <div id="ai-result" class="hidden bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-sm ai-prose dark:text-slate-200"></div>
                 `;
-            }
-        }
-        
+           }
+         }        
         // =========================================================
         // ENGINE MODEL GEMINI OTOMATIS (ENDPOINT RESMI LISTMODELS)
         // =========================================================
@@ -4177,7 +4293,17 @@ function bukaPapanSkorPodium() {
             document.getElementById('bedah-soal-modal').classList.add('hidden');
         }
 
-        window.onload = () => { loadDatabase(); };
+        window.onload = async () => { 
+            // Tunggu sampai fungsi tarik data dan render Dashboard SELESAI 100%
+            await loadDatabase(); 
+            
+            // Setelah data lengkap terisi, BARU buka tirai loading-nya
+            const loader = document.getElementById('app-preloader');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+            }
+        };
   // Variable Buffer Undo
 let undoBufferSoal = null;
 let undoTimeoutId = null;
@@ -4693,49 +4819,8 @@ if (mapelObserverTarget) {
         fabContainer.addEventListener("mousedown", dragStartFab);
         document.addEventListener("mouseup", dragEndFab);
         document.addEventListener("mousemove", dragFab);
-        // --- MESIN SCANNER KAMERA MANDIRI (ANTI-BLANK) ---
-        function bukaScannerGlobal() {
-            // Membuka modal input/kamera cepat
-            let nis = prompt("SCAN KARTU / MASUKAN NIS SISWA:\nArahkan atau ketik Nomor Induk Siswa (NIS):");
-            if (!nis) return;
-            
-            prosesHasilScanGlobal(nis.trim());
-        }
-
-        function prosesHasilScanGlobal(nisAtauId) {
-            const tanggalHariIni = new Date().toISOString().split('T')[0];
-            
-            // Cari siswa berdasarkan NIS atau ID di seluruh kelas
-            const siswa = AppState.db.siswa.find(s => s.nis === nisAtauId || s.id === nisAtauId);
-            
-            if (siswa) {
-                const kelasSiswa = siswa.kelasId;
-                let existingIndex = AppState.db.absensi.findIndex(a => a.siswaId === siswa.id && a.tanggal === tanggalHariIni && a.kelasId === kelasSiswa);
-                
-                if (existingIndex >= 0) {
-                    AppState.db.absensi[existingIndex].status = 'H';
-                } else {
-                    AppState.db.absensi.push({ id: generateId(), siswaId: siswa.id, kelasId: kelasSiswa, tanggal: tanggalHariIni, status: 'H' });
-                }
-                
-                // Simpan otomatis ke database
-                localStorage.setItem(AppState.config.storageKey, JSON.stringify(AppState.db));
-                if (AppState.config.gasUrl && AppState.config.gasUrl.startsWith("http")) {
-                    fetch(AppState.config.gasUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(AppState.db) }).catch(()=>{});
-                }
-
-                if (typeof playTick === 'function') playTick(800); 
-                alert(`SUKSES: ${siswa.nama} tercatat HADIR hari ini!`);
-                
-                if (AppState.ui.activeTab === 'absensi') {
-                    renderContent('absensi'); 
-                }
-            } else {
-                if (typeof playTick === 'function') playTick(200); 
-                alert("GAGAL: NIS atau ID Siswa tidak ditemukan di database!");
-            }
-        }
-        // --- MESIN LACI SAMPING (EDGE PANEL) ---
+       
+               // --- MESIN LACI SAMPING (EDGE PANEL) ---
         function toggleEdgePanel() {
             const panel = document.getElementById('edge-panel');
             const icon = document.getElementById('edge-icon');
@@ -4752,7 +4837,617 @@ if (mapelObserverTarget) {
                 icon.style.transform = 'rotate(0deg)'; // Putar panah ke kiri
             }
         }
-   </script>
+       // =========================================================================
+// MODUL UTAMA: PRESENTATION STUDIO (SMART TEACHER v2.0)
+// =========================================================================
+
+// 1. Inisialisasi Memori State jika belum ada
+if (!AppState.ui.psTab) AppState.ui.psTab = 'create';
+if (!AppState.db.prompts) AppState.db.prompts = [];
+
+// 2. Fungsi Navigasi Tab dalam Presentation Studio
+function gantiTabPS(tabName) {
+    AppState.ui.psTab = tabName;
+    renderPresentationStudio(document.getElementById('main-content'));
+}
+
+// 3. Fungsi Utama Perenderan Halaman Presentation Studio
+function renderPresentationStudio(container) {
+    const activeTab = AppState.ui.psTab || 'create';
+    
+    let content = `
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 lg:p-8 max-w-5xl mx-auto fade-in">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-xl lg:text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tight">
+                    <i class="fa-solid fa-person-chalkboard text-emerald-500 mr-2.5"></i>SMART TEACHER — PRESENTATION STUDIO
+                </h3>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
+                Buat prompt presentasi pembelajaran yang menarik, menyenangkan, interaktif, dan sesuai kebutuhan siswa.
+            </p>
+
+            <div class="grid grid-cols-2 sm:flex sm:flex-row gap-2 mb-6 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <button onclick="gantiTabPS('create')" class="flex-1 py-2.5 px-3 rounded-xl font-bold transition-all text-xs ${activeTab==='create'?'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm':'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Buat Prompt Baru
+                </button>
+                <button onclick="gantiTabPS('collection')" class="flex-1 py-2.5 px-3 rounded-xl font-bold transition-all text-xs ${activeTab==='collection'?'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm':'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}">
+                    <i class="fa-solid fa-book-bookmark mr-1.5"></i> Koleksi Tersimpan (${AppState.db.prompts?.length || 0})
+                </button>
+            </div>
+    `;
+
+    if (activeTab === 'create') {
+        content += `
+            <div class="space-y-6">
+                <!-- KOTAK 1: IDENTITAS PEMBELAJARAN -->
+                <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm mb-4 flex items-center">
+                        <i class="fa-solid fa-school text-emerald-500 mr-2"></i>1. Identitas Pembelajaran
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Jenjang Pendidikan *</label>
+                            <select id="ps-jenjang" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+    <option value="SD">SD</option>
+    <option value="MI">MI</option>
+    <option value="SMP">SMP</option>
+    <option value="MTs">MTs</option>
+    <option value="SMA">SMA</option>
+    <option value="SMK">SMK</option>
+    <option value="MA">MA</option>
+    <option value="PAUD/TK">PAUD/TK</option>
+    <option value="Lainnya">Lainnya (Kustom)</option>
+</select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Kelas *</label>
+                            <input type="text" id="ps-kelas" placeholder="Contoh: Kelas 6 / Fase C" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Mata Pelajaran *</label>
+                            <input type="text" id="ps-mapel" placeholder="Contoh: Ilmu Pengetahuan Alam (IPA)" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Kurikulum</label>
+                            <select id="ps-kurikulum" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                                <option value="Kurikulum Merdeka">Kurikulum Merdeka</option>
+                                <option value="Kurikulum 2013">Kurikulum 2013</option>
+                                <option value="Umum">Umum / Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Bahasa Presentasi</label>
+                            <select id="ps-bahasa" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                                <option value="Indonesia Ramah & Menyenangkan">Indonesia Ramah & Menyenangkan</option>
+                                <option value="Indonesia Formal">Indonesia Formal (Baku)</option>
+                                <option value="Inggris (Bilingual)">Inggris (Bilingual)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KOTAK 2: SUBSTANSI MATERI -->
+                <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm mb-4 flex items-center">
+                        <i class="fa-solid fa-book-open text-emerald-500 mr-2"></i>2. Substansi Materi
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Materi Utama *</label>
+                            <input type="text" id="ps-materi" placeholder="Contoh: Tata Surya" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white font-bold text-emerald-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Submateri</label>
+                            <input type="text" id="ps-submateri" placeholder="Contoh: Karakteristik Planet Dalam & Luar" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-1">Tujuan Pembelajaran *</label>
+                        <textarea id="ps-tujuan" rows="2" placeholder="Siswa dapat mengidentifikasi nama planet dan karakteristiknya..." class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white custom-scrollbar"></textarea>
+                    </div>
+                </div>
+
+                <!-- KOTAK 3: KONSEP VISUAL & PEMBELAJARAN -->
+                <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                    <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm mb-4 flex items-center">
+                        <i class="fa-solid fa-palette text-emerald-500 mr-2"></i>3. Konsep Visual & Pembelajaran
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Gaya Visual Desain *</label>
+                            <select id="ps-visual" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none dark:text-white cursor-pointer">
+                                <option value="3D Clay Animation (Lucu, bertekstur plastisin lembut, warna cerah)">3D Clay Animation (Plastisin Lembut)</option>
+                                <option value="Pop-Up Book (Elemen 3D muncul dari lipatan kertas)">Pop-Up Book (Kertas Lipat 3D)</option>
+                                <option value="Game Adventure (Desain level permainan, elemen RPG)">Game Adventure (Tema RPG/Petualangan)</option>
+                                <option value="Detective Learning (Misteri, monokrom/kaca pembesar)">Detective Learning (Tema Misteri)</option>
+                                <option value="Storytelling (Ilustrasi buku cerita tangan/watercolor)">Storytelling (Buku Cerita)</option>
+                                <option value="Virtual Field Trip (Latar realistis/fotografi lapangan)">Virtual Field Trip (Tur Virtual)</option>
+                                <option value="Cinematic Presentation (Gelap dramatis, elegan)">Cinematic Presentation (Dramatis)</option>
+                                <option value="Infografis Modern (Clean, flat design, diagram data)">Infografis Modern (Data Visual)</option>
+                                <option value="Kartun Edukasi (Vektor 2D cerah, outline tegas)">Kartun Edukasi (Vektor 2D)</option>
+                                <option value="Minimalis Profesional (Bersih, elegan, font tebal)">Minimalis Profesional</option>
+                                <option value="Gaya Kustom Bebas (Sesuaikan dengan AI)">Gaya Kustom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Model Pembelajaran</label>
+                            <select id="ps-model" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none dark:text-white cursor-pointer">
+                                <option value="Discovery Learning (Mencari dan Menemukan)">Discovery Learning</option>
+                                <option value="Project Based Learning (PjBL)">Project Based Learning (PjBL)</option>
+                                <option value="Problem Based Learning (PBL)">Problem Based Learning (PBL)</option>
+                                <option value="Game-Based Learning (Bermain Sambil Belajar)">Game-Based Learning</option>
+                                <option value="Kontekstual (CTL)">Kontekstual (CTL)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="block text-xs font-bold text-slate-500 mb-2">Jenis Aktivitas Interaktif (Bisa pilih lebih dari satu):</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-5">
+                        ${['Tebak gambar', 'Mencocokkan pasangan', 'Permainan edukatif', 'Diskusi kelompok', 'Studi kasus', 'Eksperimen sederhana', 'Latihan soal', 'Refleksi pembelajaran'].map(act => `
+                            <label class="inline-flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors">
+                                <input type="checkbox" name="ps-aktivitas" value="${act}" class="w-4 h-4 accent-emerald-600 rounded">
+                                <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">${act}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Bentuk Evaluasi</label>
+                            <select id="ps-evaluasi" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                                <option value="Kuis pilihan ganda">Kuis Pilihan Ganda</option>
+                                <option value="Benar atau salah">Benar atau Salah</option>
+                                <option value="Isian singkat">Isian Singkat</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Target Jumlah Slide</label>
+                            <select id="ps-slide" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+                                <option value="Otomatis (Dinamis menyesuaikan materi)">Otomatis (Dinamis)</option>
+                                <option value="Tepat 7 Slide">7 Slide</option>
+                                <option value="Tepat 10 Slide">10 Slide</option>
+                                <option value="Tepat 15 Slide">15 Slide</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Platform Tujuan</label>
+<select id="ps-platform" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none dark:text-white">
+    <option value="Canva AI (Magic Design)">Canva AI (Magic Design)</option>
+    <option value="Gamma App (gamma.app - AI Generator)">Gamma App (AI Otomatis - Gratis & Banyak Kuota)</option>
+    <option value="Microsoft PowerPoint / Copilot (Akun belajar.id)">Microsoft PowerPoint / Copilot (Resmi Belajar.id)</option>
+</select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOMBOL EKSEKUSI UTAMA -->
+                <button onclick="generatePSPrompt()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-600/30 transition-transform hover:scale-[1.01] flex items-center justify-center text-base">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2.5 text-lg"></i> BUAT PROMPT
+                </button>
+
+                <!-- AREA PANEL HASIL -->
+                <div id="ps-result-area" class="hidden mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 fade-in">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-black text-slate-800 dark:text-white flex items-center text-sm uppercase">
+                            <i class="fa-solid fa-code text-emerald-500 mr-2"></i>Hasil Prompt Tersusun
+                        </h4>
+                    </div>
+                    
+                    <textarea id="ps-output-text" class="w-full h-80 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-2xl p-4 text-xs font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 custom-scrollbar mb-4 whitespace-pre-wrap"></textarea>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <button onclick="salinPSPrompt()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs shadow-sm col-span-2 md:col-span-1">
+                            <i class="fa-regular fa-copy mr-1.5"></i> SALIN PROMPT
+                        </button>
+                        <button onclick="editPSPrompt()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 font-bold py-3 rounded-xl text-xs shadow-sm">
+                            <i class="fa-solid fa-pen-to-square mr-1.5"></i> EDIT PROMPT
+                        </button>
+                        <button onclick="generatePSPrompt()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 font-bold py-3 rounded-xl text-xs shadow-sm">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> BUAT ULANG
+                        </button>
+                        <button onclick="simpanPSPrompt()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs shadow-sm">
+                            <i class="fa-solid fa-bookmark mr-1.5"></i> SIMPAN KOLEKSI
+                        </button>
+                        <button id="ps-btn-buka" onclick="bukaPlatformTujuan()" class="font-bold py-3 rounded-xl text-xs shadow-sm text-white transition-all col-span-2 md:col-span-1 flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-600">
+    <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i> <span id="ps-btn-buka-text">BUKA PLATFORM TUJUAN</span>
+</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // TAB KOLEKSI PROMPT TERSIMPAN
+        const listPrompts = AppState.db.prompts || [];
+        let searchVal = (document.getElementById('ps-search')?.value || '').toLowerCase();
+        let filtered = listPrompts.filter(p => p.judul.toLowerCase().includes(searchVal) || p.mapel.toLowerCase().includes(searchVal));
+
+        let rowHtml = '';
+        if (filtered.length === 0) {
+            rowHtml = `<div class="text-center py-12 text-slate-400 text-xs font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">Belum ada prompt tersimpan yang sesuai.</div>`;
+        } else {
+            rowHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">` + filtered.map(p => `
+                <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 relative group transition-all hover:border-emerald-400">
+                    <button onclick="hapusPSPrompt('${p.id}')" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">${p.mapel}</span>
+                    <h4 class="font-bold text-slate-800 dark:text-white mt-3 text-sm leading-tight">${p.judul}</h4>
+                    <p class="text-[11px] text-slate-400 mt-1 mb-4 truncate">${p.kelas} • ${p.tanggal}</p>
+                    <div class="flex gap-2">
+                        <button onclick="lihatPSPrompt('${p.id}')" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold py-2 rounded-xl text-xs transition-colors"><i class="fa-solid fa-folder-open mr-1"></i> Buka</button>
+                        <button onclick="salinTeksCepat('${p.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition-colors"><i class="fa-regular fa-copy mr-1"></i> Salin</button>
+                    </div>
+                    <textarea id="hidden-prompt-${p.id}" class="hidden">${escapeHTML(p.promptTeks)}</textarea>
+                </div>
+            `).join('') + `</div>`;
+        }
+
+        content += `
+            <div class="space-y-4 fade-in">
+                <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+                    <h4 class="font-bold text-slate-700 dark:text-slate-300 text-sm"><i class="fa-solid fa-box-archive mr-2"></i>Daftar Koleksi Anda</h4>
+                    <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="ps-search" placeholder="Cari Mapel / Materi..." oninput="renderPresentationStudio(document.getElementById('main-content'))" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs outline-none focus:border-emerald-500 dark:text-white" value="${searchVal}">
+                    </div>
+                </div>
+                ${rowHtml}
+            </div>
+        `;
+    }
+
+    content += `</div>`;
+    container.innerHTML = content;
+}
+
+// 4. MESIN PEMBUAT PROMPT AKTUAL DARI FORMULIR
+function generatePSPrompt() {
+    const jenjang = document.getElementById('ps-jenjang').value;
+    const kelas = document.getElementById('ps-kelas').value.trim();
+    const mapel = document.getElementById('ps-mapel').value.trim();
+    const materi = document.getElementById('ps-materi').value.trim();
+    const submateri = document.getElementById('ps-submateri').value.trim();
+    const tujuan = document.getElementById('ps-tujuan').value.trim();
+    
+    if (!kelas || !mapel || !materi || !tujuan) {
+        return showAlert('Peringatan', 'Harap lengkapi kolom wajib: Kelas, Mata Pelajaran, Materi Utama, dan Tujuan Pembelajaran!', 'error');
+    }
+
+    const cbs = document.querySelectorAll('input[name="ps-aktivitas"]:checked');
+    const aktivitasStr = cbs.length > 0 ? Array.from(cbs).map(cb => cb.value).join(', ') : 'Tanpa aktivitas khusus';
+
+    const megaPrompt = `Buatkan desain presentasi pembelajaran secara utuh dan terstruktur yang ditujukan untuk Canva AI (Magic Design) dengan spesifikasi detail berikut:
+
+A. IDENTITAS PEMBELAJARAN
+- Jenjang Pendidikan: ${jenjang}
+- Kelas / Fase: ${kelas}
+- Mata Pelajaran: ${mapel}
+- Materi Utama: ${materi}
+${submateri ? '- Submateri: ' + submateri : ''}
+- Kurikulum: ${document.getElementById('ps-kurikulum').value}
+- Bahasa Presentasi: ${document.getElementById('ps-bahasa').value}
+
+B. TUJUAN PEMBELAJARAN & PROFIL SISWA
+- Tujuan Pembelajaran: ${tujuan}
+- Profil Siswa: Sesuaikan tingkat kedalaman materi, bahasa, logika, dan contoh konkret agar mudah dicerna, menarik, dan relevan dengan dunia siswa jenjang ${jenjang} kelas ${kelas}.
+
+C. ARAHAN KONSEP VISUAL & DESAIN (${document.getElementById('ps-platform').value})
+- Gaya Visual Dominan: ${document.getElementById('ps-visual').value}
+- Instruksi Desain: Jaga konsistensi palet warna, karakter, dan elemen ilustrasi antar slide. Hindari penggunaan teks yang terlalu padat (bullet points). Maksimalkan ruang kosong (white space) dan visualisasi.
+
+D. STRUKTUR PRESENTASI (${document.getElementById('ps-slide').value})
+Susun urutan presentasi menggunakan Model Pembelajaran "${document.getElementById('ps-model').value}" secara sistematis:
+1. Halaman Sampul (Judul besar, identitas, dan deskripsi ilustrasi utama).
+2. Sapaan Awal & Tujuan Pembelajaran (Ramah, jelas, poin-poin ringkas).
+3. Apersepsi / Pertanyaan Pemantik (Mengaitkan materi dengan pengalaman nyata siswa sehari-hari).
+4. Materi Inti (Bagi menjadi beberapa slide yang berkesinambungan, fokus pada poin gagasan pokok).
+5. Contoh Konkret / Studi Kasus Nyata.
+6. Aktivitas Siswa: ${aktivitasStr}.
+7. Rangkuman & Refleksi Pembelajaran.
+8. Evaluasi Formatif: ${document.getElementById('ps-evaluasi').value}. (Sediakan soal tanpa kunci jawaban di slide siswa).
+9. Penutup & Kalimat Motivasi.
+10. Kunci Jawaban Terpisah (Sediakan khusus di slide terakhir sebagai pegangan Guru).
+
+E. KETENTUAN MUTLAK KONTEN (PENTING)
+- JANGAN pernah mengarang fakta, rumus, definisi pakem, hukum sains, dalil, kutipan sejarah, atau aturan kurikulum. 
+- Jika ada informasi atau data spesifik yang di-generate AI dan membutuhkan validasi, berikan penanda teks "[VERIFIKASI GURU]" di akhir kalimat tersebut.
+- Fokuskan output Anda untuk menjadi teks kerangka presentasi (Outline) yang langsung rapi ketika disalin ke Canva.`;
+
+    const outputEl = document.getElementById('ps-output-text');
+    const areaEl = document.getElementById('ps-result-area');
+    
+    outputEl.value = megaPrompt;
+    outputEl.readOnly = true;
+    areaEl.classList.remove('hidden');
+    
+    setTimeout(() => areaEl.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+    updateTombolPlatformUI();
+}
+
+// 5. TOMBOL AKSI & KOLEKSI
+function salinPSPrompt() {
+    const teks = document.getElementById('ps-output-text').value;
+    salinTeksAsli(teks);
+}
+
+function salinTeksCepat(id) {
+    const teks = document.getElementById(`hidden-prompt-${id}`).value;
+    salinTeksAsli(teks);
+}
+
+function salinTeksAsli(teks) {
+    if (!teks) return;
+    try {
+        const ta = document.createElement("textarea");
+        ta.value = teks;
+        ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showAlert("Disalin!", "Teks prompt berhasil disalin. Silakan paste ke Canva AI.", "success");
+    } catch (err) {
+        prompt("Sistem memblokir copy otomatis. Silakan salin manual teks di bawah ini:", teks);
+    }
+}
+
+function editPSPrompt() {
+    const outputEl = document.getElementById('ps-output-text');
+    outputEl.readOnly = false;
+    outputEl.focus();
+    showAlert("Mode Edit Aktif", "Silakan ubah teks prompt langsung di kotak hasil. Jangan lupa salin atau simpan setelah selesai mengedit.", "info");
+}
+
+function simpanPSPrompt() {
+    const mapel = document.getElementById('ps-mapel')?.value.trim() || 'Umum';
+    const materi = document.getElementById('ps-materi')?.value.trim() || 'Materi Presentasi';
+    const kelas = document.getElementById('ps-kelas')?.value.trim() || '-';
+    const teks = document.getElementById('ps-output-text').value.trim();
+    
+    if(!teks) return showAlert("Gagal", "Prompt masih kosong, tidak ada yang bisa disimpan.", "error");
+
+    if(!AppState.db.prompts) AppState.db.prompts = [];
+    
+    AppState.db.prompts.unshift({
+        id: generateId(),
+        judul: materi,
+        mapel: mapel,
+        kelas: kelas,
+        promptTeks: teks,
+        tanggal: new Date().toLocaleDateString('id-ID')
+    });
+    
+    saveDatabase();
+    showAlert("Tersimpan!", "Prompt telah berhasil disimpan ke Koleksi Presentation Studio.", "success");
+}
+
+function hapusPSPrompt(id) {
+    if(confirm('Yakin ingin menghapus prompt ini dari koleksi?')) {
+        AppState.db.prompts = AppState.db.prompts.filter(p => p.id !== id);
+        saveDatabase();
+        gantiTabPS('collection');
+    }
+}
+
+function lihatPSPrompt(id) {
+    const p = AppState.db.prompts.find(x => x.id === id);
+    if(p) {
+        gantiTabPS('create');
+        setTimeout(() => {
+            const area = document.getElementById('ps-result-area');
+            const ta = document.getElementById('ps-output-text');
+            if(area && ta) {
+                area.classList.remove('hidden');
+                ta.value = p.promptTeks;
+            }
+        }, 100);
+    }
+}
+
+function bukaPlatformTujuan() {
+    const platform = document.getElementById('ps-platform').value;
+    
+    if (platform.includes('Gamma')) {
+        window.open('https://gamma.app/', '_blank');
+    } else if (platform.includes('Microsoft') || platform.includes('belajar.id')) {
+        window.open('https://www.office.com/', '_blank');
+    } else {
+        // Default ke Canva AI
+        window.open('https://www.canva.com/magic', '_blank');
+    }
+}
+// Fungsi untuk mengubah warna & teks tombol secara dinamis sesuai platform
+function updateTombolPlatformUI() {
+    const platform = document.getElementById('ps-platform').value;
+    const btnEl = document.getElementById('ps-btn-buka');
+    const textEl = document.getElementById('ps-btn-buka-text');
+    
+    if (!btnEl || !textEl) return;
+
+    // Reset kelas warna gradient tombol
+    btnEl.className = "font-bold py-3 rounded-xl text-xs shadow-sm text-white transition-all col-span-2 md:col-span-1 flex items-center justify-center";
+
+    if (platform.includes('Gamma')) {
+        textEl.innerText = "BUKA GAMMA APP";
+        btnEl.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-indigo-600', 'hover:from-purple-500', 'hover:to-indigo-500');
+    } else if (platform.includes('Microsoft') || platform.includes('belajar.id')) {
+        textEl.innerText = "BUKA MICROSOFT";
+        btnEl.classList.add('bg-gradient-to-r', 'from-blue-700', 'to-sky-600', 'hover:from-blue-600', 'hover:to-sky-500');
+    } else {
+        textEl.innerText = "BUKA CANVA AI";
+        btnEl.classList.add('bg-gradient-to-r', 'from-cyan-500', 'to-blue-600', 'hover:from-cyan-400', 'hover:to-blue-500');
+    }
+}
+
+// FITUR BARU: GENERATOR KARTU QR CODE SISWA (VERSI BISA DICETAK)
+        function lihatQRSiswa(id) {
+            const siswa = AppState.db.siswa.find(s => s.id === id);
+            if(!siswa) return;
+            
+            // Gunakan NIS sebagai data utama QR. Jika belum ada NIS, pakai ID unik sistem.
+            const targetData = siswa.nis || siswa.id; 
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetData)}&margin=10`;
+
+            const modalHtml = `
+            <div id="qr-modal-tampil" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all fade-in">
+                <!-- CSS Khusus agar saat di-print hanya Kartu QR yang muncul -->
+                <style>
+                    @media print {
+                        body * { visibility: hidden; }
+                        #qr-modal-tampil, #qr-modal-tampil * { visibility: visible; }
+                        #qr-modal-tampil { position: absolute; left: 0; top: 0; width: 100%; height: 100%; align-items: flex-start; justify-content: center; padding-top: 2rem; background: white !important; }
+                        .qr-no-print { display: none !important; }
+                    }
+                </style>
+                
+                <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-2xl w-full max-w-sm text-center relative border border-slate-200 dark:border-slate-800">
+                    <button onclick="document.getElementById('qr-modal-tampil').remove()" class="qr-no-print absolute top-4 right-4 w-9 h-9 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 rounded-xl flex items-center justify-center font-bold transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+                    <div class="qr-no-print w-12 h-12 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner"><i class="fa-solid fa-id-badge"></i></div>
+                    
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white mb-1">Kartu Pelajar Digital</h3>
+                    <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-6">${siswa.nama} <br><span class="text-xs text-slate-500 dark:text-slate-400">NIS: ${siswa.nis || 'Belum diatur'}</span></p>
+                    
+                    <!-- Kotak QR Code -->
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border-2 border-dashed border-slate-300 inline-block mb-6 relative group">
+                        <img src="${qrUrl}" alt="QR Code ${siswa.nama}" class="w-48 h-48 object-contain">
+                    </div>
+                    
+                    <p class="qr-no-print text-[11px] text-slate-500 mb-5 leading-relaxed">QR Code ini langsung terhubung dengan NIS siswa. Bisa digunakan untuk scan di <b>Smart Gateway</b>.</p>
+                    <button onclick="window.print()" class="qr-no-print w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center"><i class="fa-solid fa-print mr-2"></i> Cetak Kartu QR</button>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        // =========================================================
+        // ENGINE SINKRONISASI SMART GATEWAY (IOT)
+        // =========================================================
+        async function tarikDataGateway(kelasId) {
+            if (!AppState.config.gatewayUrl) {
+                return showAlert("Belum Terhubung", "Tautan Smart Gateway kosong! Harap masukkan URL dari gerbang sekolah di menu Pengaturan.", "error");
+            }
+            
+            const btn = document.getElementById('btn-tarik-gateway');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Sedang Menarik Data...';
+            btn.disabled = true;
+
+            try {
+                // Sedot data dari mesin gerbang (dalam format JSON)
+                const response = await fetch(AppState.config.gatewayUrl);
+                const dataGateway = await response.json();
+                
+                let hitungBerhasil = 0;
+                
+                // Siapkan daftar siswa yang ada di kelas ini
+                const siswaKelas = AppState.db.siswa.filter(s => s.kelasId === kelasId);
+                
+                // Cocokkan NIS dari gerbang dengan NIS murid di kelas ini
+                dataGateway.forEach(absenGerbang => {
+                    // Gateway harus mengirimkan setidaknya { nis: "1001", tanggal: "2026-10-28" }
+                    if (absenGerbang.nis && absenGerbang.tanggal) {
+                        const siswaMatch = siswaKelas.find(s => String(s.nis) === String(absenGerbang.nis));
+                        
+                        if (siswaMatch) {
+                            // Cek apakah di Smart Teacher siswa ini sudah diabsen pada tanggal tersebut
+                            const idx = AppState.db.absensi.findIndex(a => 
+                                a.siswaId === siswaMatch.id && 
+                                a.tanggal === absenGerbang.tanggal && 
+                                a.kelasId === kelasId
+                            );
+                            
+                            if (idx >= 0) {
+                                // Jika sudah ada tapi belum 'H', timpa jadi Hadir (H)
+                                if (AppState.db.absensi[idx].status !== 'H') {
+                                    AppState.db.absensi[idx].status = 'H';
+                                    hitungBerhasil++;
+                                }
+                            } else {
+                                // Jika belum diabsen sama sekali, catat sebagai Hadir (H)
+                                AppState.db.absensi.push({
+                                    id: generateId(),
+                                    siswaId: siswaMatch.id,
+                                    kelasId: kelasId,
+                                    tanggal: absenGerbang.tanggal,
+                                    status: 'H'
+                                });
+                                hitungBerhasil++;
+                            }
+                        }
+                    }
+                });
+                
+                if (hitungBerhasil > 0) {
+                    saveDatabase(); // Simpan diam-diam
+                    showAlert("Sinkronisasi Sukses!", `Berhasil menarik dan mencentang Hadir (H) untuk ${hitungBerhasil} siswa dari Smart Gateway!`, "success");
+                } else {
+                    showAlert("Selesai", "Semua data sudah sinkron. Tidak ada kehadiran baru dari mesin gerbang untuk kelas ini.", "info");
+                }
+                
+            } catch (err) {
+                console.error(err);
+                showAlert("Koneksi Gagal", "Gagal menyedot data dari Smart Gateway. Pastikan tautan di Pengaturan benar dan internet stabil.", "error");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
+            }
+        }
+        // =========================================================
+        // SECURITY & FIREBASE AUTHENTICATION SYSTEM
+        // =========================================================
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
+            authDomain: "smart-teacher-v3.firebaseapp.com",
+            projectId: "smart-teacher-v3",
+            storageBucket: "smart-teacher-v3.firebasestorage.app",
+            messagingSenderId: "984725799915",
+            // PENTING: Lengkapi appId di bawah ini sesuai yang ada di web Firebase Bosku (karena di screenshot sebelumnya terpotong)
+            appId: "1:984725799915:web:SILAKAN_LENGKAPI_KODENYA_DI_SINI" 
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // Pantau Status Login (Otomatis menyembunyikan layar login jika sudah masuk)
+        auth.onAuthStateChanged((user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if (user) {
+                console.log("Akses Diberikan kepada:", user.displayName);
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => loginScreen.classList.add('hidden'), 500);
+            } else {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+            }
+        });
+
+        // Tombol Aksi Login Google
+        function loginDenganGoogle() {
+            const btn = document.getElementById('btn-login-google');
+            const errorMsg = document.getElementById('login-error-msg');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log("Login Berhasil!");
+                    // Layar otomatis tertutup oleh pemantau status (onAuthStateChanged) di atas
+                })
+                .catch((error) => {
+                    console.error("Error login:", error);
+                    errorMsg.innerText = "Gagal masuk: " + error.message;
+                    errorMsg.classList.remove('hidden');
+                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
+                    btn.disabled = false;
+                });
+        }
+        
+          </script>
    <!-- MODAL KELOLA BANK SOAL -->
 <div id="bank-soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[87] hidden flex items-center justify-center p-4 transition-all no-print">
     <div class="bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 lg:p-8 transform transition-all border border-indigo-500/30 text-white flex flex-col max-h-[90vh]">
