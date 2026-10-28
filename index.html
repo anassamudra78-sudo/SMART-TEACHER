@@ -5426,7 +5426,56 @@ function updateTombolPlatformUI() {
             }
         });
 
-        // Tombol Login dengan Proteksi Anti-Freeze (Anti Nyangkut)
+       // =========================================================
+        // SISTEM GOOGLE AUTH: METODE REDIRECT (PALING AMAN DI HP)
+        // =========================================================
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
+            authDomain: "smart-teacher-v3.firebaseapp.com",
+            projectId: "smart-teacher-v3",
+            storageBucket: "smart-teacher-v3.firebasestorage.app",
+            messagingSenderId: "984725799915",
+            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // 1. Tangkap hasil login setelah halaman dialihkan kembali (*redirect*) dari Google
+        auth.getRedirectResult().then((result) => {
+            if (result.user) {
+                console.log("Login Redirect Berhasil:", result.user.displayName);
+            }
+        }).catch((error) => {
+            console.error("Error Redirect:", error);
+            const errorMsg = document.getElementById('login-error-msg');
+            if (errorMsg) {
+                errorMsg.innerText = "Gagal masuk: " + error.message;
+                errorMsg.classList.remove('hidden');
+            }
+        });
+
+        // 2. Pantau status login pengguna
+        auth.onAuthStateChanged((user) => {
+            const loginScreen = document.getElementById('login-screen');
+            if (user) {
+                if (loginScreen) {
+                    loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => loginScreen.classList.add('hidden'), 500);
+                }
+            } else {
+                if (loginScreen) {
+                    loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                }
+            }
+        });
+
+        // 3. Tombol Eksekusi Menggunakan Redirect
         function loginDenganGoogle() {
             const btn = document.getElementById('btn-login-google');
             const errorMsg = document.getElementById('login-error-msg');
@@ -5437,32 +5486,9 @@ function updateTombolPlatformUI() {
             btn.disabled = true;
             if (errorMsg) errorMsg.classList.add('hidden');
 
-            // Proteksi Timer: Jika dalam 7 detik browser HP memblokir popup/redirect, 
-            // tombol dipaksa normal kembali agar tidak mandek selamanya
-            let loginSelesai = false;
-
-            const safetyTimer = setTimeout(() => {
-                if (!loginSelesai) {
-                    loginSelesai = true;
-                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
-                    btn.disabled = false;
-                    if (errorMsg) {
-                        errorMsg.innerText = "Browser HP memblokir jendela login. Coba buka di tab browser eksternal.";
-                        errorMsg.classList.remove('hidden');
-                    }
-                }
-            }, 7000);
-
-            // Eksekusi Popup Google
-            auth.signInWithPopup(provider).then((result) => {
-                loginSelesai = true;
-                clearTimeout(safetyTimer);
-                console.log("Login Berhasil");
-            }).catch((error) => {
-                loginSelesai = true;
-                clearTimeout(safetyTimer);
-                console.error("Error login:", error);
-                
+            // Mengalihkan halaman penuh ke Google (Anti Blokir Pop-up HP)
+            auth.signInWithRedirect(provider).catch((error) => {
+                console.error("Gagal Redirect:", error);
                 if (errorMsg) {
                     errorMsg.innerText = "Gagal: " + error.message;
                     errorMsg.classList.remove('hidden');
