@@ -5400,8 +5400,7 @@ function updateTombolPlatformUI() {
             projectId: "smart-teacher-v3",
             storageBucket: "smart-teacher-v3.firebasestorage.app",
             messagingSenderId: "984725799915",
-            // PENTING: Lengkapi appId di bawah ini sesuai yang ada di web Firebase Bosku (karena di screenshot sebelumnya terpotong)
-            appId: "1:984725799915:web:SILAKAN_LENGKAPI_KODENYA_DI_SINI" 
+            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
         };
 
         // Inisialisasi Firebase
@@ -5411,6 +5410,20 @@ function updateTombolPlatformUI() {
         
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
+
+        // 1. PENANGKAP HASIL REDIRECT (Wajib agar setelah login dari Google, aplikasi langsung masuk)
+        auth.getRedirectResult().then((result) => {
+            if (result.user) {
+                console.log("Login Redirect Berhasil:", result.user.displayName);
+            }
+        }).catch((error) => {
+            console.error("Error Redirect:", error);
+            const errorMsg = document.getElementById('login-error-msg');
+            if (errorMsg) {
+                errorMsg.innerText = "Gagal masuk: " + error.message;
+                errorMsg.classList.remove('hidden');
+            }
+        });
 
         // Pantau Status Login (Otomatis menyembunyikan layar login jika sudah masuk)
         auth.onAuthStateChanged((user) => {
@@ -5424,24 +5437,23 @@ function updateTombolPlatformUI() {
             }
         });
 
-        // Tombol Aksi Login Google (Metode Redirect untuk HP)
-function loginDenganGoogle() {
-    const btn = document.getElementById('btn-login-google');
-    const errorMsg = document.getElementById('login-error-msg');
-    
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
-    btn.disabled = true;
-    errorMsg.classList.add('hidden');
+        // Tombol Aksi Login Google (Menggunakan Redirect agar tidak macet di HP)
+        function loginDenganGoogle() {
+            const btn = document.getElementById('btn-login-google');
+            const errorMsg = document.getElementById('login-error-msg');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
 
-    // Menggunakan redirect agar aman dari pemblokiran popup di browser HP
-    auth.signInWithRedirect(provider).catch((error) => {
-        console.error("Error login:", error);
-        errorMsg.innerText = "Gagal masuk: " + error.message;
-        errorMsg.classList.remove('hidden');
-        btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
-        btn.disabled = false;
-    });
-}
+            auth.signInWithRedirect(provider).catch((error) => {
+                console.error("Error login:", error);
+                errorMsg.innerText = "Gagal masuk: " + error.message;
+                errorMsg.classList.remove('hidden');
+                btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
+                btn.disabled = false;
+            });
+        }
         
           </script>
    <!-- MODAL KELOLA BANK SOAL -->
