@@ -5367,25 +5367,21 @@ function updateTombolPlatformUI() {
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
             }
         }
-     // =========================================================
-        // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
-        // =========================================================
-        
-        // 1. NYALAKAN MESIN FIREBASE (WAJIB ADA)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
-            authDomain: "smart-teacher-v3.firebaseapp.com",
-            projectId: "smart-teacher-v3",
-            storageBucket: "smart-teacher-v3.firebasestorage.app",
-            messagingSenderId: "984725799915",
-            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+     // Fungsi Pemastian Firebase Tanpa Variabel Eksternal
+        function getDB() {
+            if (!firebase.apps.length) {
+                firebase.initializeApp({
+                    apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
+                    authDomain: "smart-teacher-v3.firebaseapp.com",
+                    projectId: "smart-teacher-v3",
+                    storageBucket: "smart-teacher-v3.firebasestorage.app",
+                    messagingSenderId: "984725799915",
+                    appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
+                });
+            }
+            return firebase.database();
         }
 
-        // 2. FUNGSI PINDAH-PINDAH FORMULIR
         function toggleForm(mode) {
             const formMasuk = document.getElementById('form-masuk');
             const formDaftar = document.getElementById('form-daftar');
@@ -5406,7 +5402,6 @@ function updateTombolPlatformUI() {
             }
         }
 
-        // 3. FUNGSI UNTUK TOMBOL "MASUK SEKARANG"
         function prosesLogin() {
             const user = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value.trim();
@@ -5426,7 +5421,7 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                firebase.database().ref('users/' + user).once('value').then((snapshot) => {
+                getDB().ref('users/' + user).once('value').then((snapshot) => {
                     const akun = snapshot.val();
                     
                     if (!akun) {
@@ -5450,7 +5445,6 @@ function updateTombolPlatformUI() {
             }
         }
 
-        // 4. FUNGSI UNTUK TOMBOL "DAFTAR AKUN BARU"
         function prosesDaftar() {
             const user = document.getElementById('reg-username').value.trim();
             const pass = document.getElementById('reg-password').value.trim();
@@ -5470,13 +5464,13 @@ function updateTombolPlatformUI() {
             }
 
             try {
-                firebase.database().ref('users/' + user).once('value').then((snapshot) => {
+                getDB().ref('users/' + user).once('value').then((snapshot) => {
                     if (snapshot.exists()) {
                         errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
                         errorMsg.classList.remove('hidden');
                     } else {
                         const dataBaru = { username: user, password: pass, dibuatPada: new Date().toISOString() };
-                        firebase.database().ref('users/' + user).set(dataBaru).then(() => {
+                        getDB().ref('users/' + user).set(dataBaru).then(() => {
                             errorMsg.classList.add('hidden');
                             localStorage.setItem('smart_teacher_user', user);
                             bukaRuangKelas(user);
@@ -5490,19 +5484,6 @@ function updateTombolPlatformUI() {
                 errorMsg.innerText = "Sistem Error: " + err.message;
                 errorMsg.classList.remove('hidden');
             }
-        }
-
-        // 5. FUNGSI BUKA LAYAR UTAMA
-        function bukaRuangKelas(username) {
-            const loginScreen = document.getElementById('login-screen');
-            if (loginScreen) {
-                loginScreen.style.opacity = '0';
-                loginScreen.style.pointerEvents = 'none';
-                setTimeout(() => {
-                    loginScreen.style.display = 'none';
-                }, 300);
-            }
-            console.log("Masuk ke ruang kelas privat:", username);
         }
         
           </script>
