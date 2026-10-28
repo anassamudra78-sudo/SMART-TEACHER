@@ -125,8 +125,8 @@
     <!-- ========================================================= -->
     <!-- LAYAR LOGIN FIREBASE (GOOGLE SIGN-IN) -->
     <!-- ========================================================= -->
-    <!-- ========================================================= -->
-    <!-- LAYAR LOGIN MANDIRI (USERNAME & SANDI PRIVAT) -->
+   <!-- ========================================================= -->
+    <!-- LAYAR AUTENTIKASI (MASUK & DAFTAR MANDIRI) -->
     <!-- ========================================================= -->
     <div id="login-screen" class="fixed inset-0 bg-slate-950 z-[99999] flex items-center justify-center p-4 transition-opacity duration-500">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -136,152 +136,44 @@
 
         <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700/60 rounded-[2.5rem] shadow-2xl p-8 lg:p-12 w-full max-w-md relative z-10 text-center transform transition-all">
             <img src="logo-pusat.png" class="w-20 h-20 mx-auto rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-6" alt="Logo">
-            
             <h2 class="text-2xl font-black text-white tracking-tight mb-1">SMART TEACHER</h2>
             <p class="text-xs text-brand-400 font-bold tracking-widest uppercase mb-6">Integrated Workspace v3.0</p>
             
-            <div class="space-y-4 text-left">
+            <!-- FORM LOGIN (MASUK) -->
+            <div id="form-masuk" class="space-y-4 text-left">
                 <div>
                     <label class="text-xs font-bold text-slate-400 mb-1 block">Username / Nama Guru</label>
-                    <input type="text" id="input-username" placeholder="Masukkan username Anda..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
+                    <input type="text" id="login-username" placeholder="Masukkan username Anda..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-400 mb-1 block">Sandi / PIN Pribadi</label>
-                    <input type="password" id="input-password" placeholder="Masukkan sandi rahasia..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
+                    <input type="password" id="login-password" placeholder="Masukkan sandi rahasia..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-500">
                 </div>
-                <button onclick="prosesLoginMandiri()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-black py-3.5 px-4 rounded-xl shadow-lg transition-all text-sm mt-2">
-                    MASUK KE RUANG KELAS
+                <button onclick="prosesLogin()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-black py-3.5 px-4 rounded-xl shadow-lg transition-all text-sm mt-2">
+                    MASUK SEKARANG
                 </button>
+                <p class="text-center text-xs text-slate-400 mt-4">Belum punya akun? <button onclick="toggleForm('daftar')" class="text-brand-400 font-bold hover:underline">Daftar di sini</button></p>
             </div>
-            
-            <p id="login-error-msg" class="text-rose-400 text-xs font-bold mt-4 hidden animate-pulse"></p>
-            
-            <div class="mt-6 pt-5 border-t border-slate-700/50">
-                <p class="text-[10px] text-slate-500 font-medium tracking-wide"><i class="fa-solid fa-shield-halved mr-1"></i> SECURED BY LOCAL CREDENTIAL SYSTEM</p>
-            </div>
-        </div>
-    </div>
-        <div class="flex h-[100dvh] w-full overflow-hidden bg-slate-900">
-        
-        <!-- SIDEBAR UTAMA -->
-        <aside id="sidebar" class="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 transition-all z-30 shadow-2xl border-r border-slate-800 shrink-0">
-            <div class="flex items-center space-x-3 px-6 py-5 border-b border-white/10 bg-white/5 backdrop-blur-md">
-                <img src="logo-pusat.png" class="w-11 h-11 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.4)]" alt="Logo Smart Teacher">
+
+            <!-- FORM DAFTAR (AWALNYA TERSEMBUNYI) -->
+            <div id="form-daftar" class="space-y-4 text-left hidden">
                 <div>
-                    <h1 class="font-extrabold text-lg tracking-tight text-white drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">SMART TEACHER</h1>
-                    <p class="text-[10px] text-amber-300 uppercase tracking-widest font-semibold">Integrated Workspace v3.0</p>
+                    <label class="text-xs font-bold text-slate-400 mb-1 block">Buat Username Baru</label>
+                    <input type="text" id="reg-username" placeholder="Tanpa spasi, misal: BudiMTK" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-indigo-500">
                 </div>
-            </div>
-            
-            <div id="sidebar-menu" class="flex-1 overflow-y-auto px-4 py-4 space-y-1 text-sm custom-scrollbar"></div>
-
-            <!-- FOOTER SIDEBAR -->
-            <div class="mt-auto pt-3 pb-2 border-t border-slate-700/50 text-center">
-                <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">
-                    SMART TEACHER v3.0 Integrated Workspace
-                </p>
-                <p class="text-[11px] text-slate-300 font-semibold mt-0.5">
-                    Dev: Muh. Nashir, S.Pd. <span class="text-purple-400 font-normal">(Anas Samudra H2A)</span>
-                </p>
-                <p class="text-[10px] text-slate-400 font-normal mt-0.5">
-                    Powered by <span class="text-cyan-400 font-medium">Gemini AI</span>
-                </p>
-            </div>
-            
-            <div class="p-4 border-t border-white/10 bg-black/20 flex items-center justify-between">
-                <div class="flex items-center space-x-3 bg-white/5 px-3 py-2 rounded-xl border border-white/10">
-                    <div class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></div>
-                    <span id="sidebar-tahun-ajaran" class="text-xs font-semibold text-slate-300">TA: -</span>
+                <div>
+                    <label class="text-xs font-bold text-slate-400 mb-1 block">Buat Sandi Baru</label>
+                    <input type="password" id="reg-password" placeholder="Buat sandi rahasia..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-indigo-500">
                 </div>
-                <button onclick="toggleDarkMode()" title="Mode Gelap / Terang" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-yellow-400 flex items-center justify-center transition-all">
-                    <i id="dark-mode-icon" class="fa-solid fa-moon"></i>
+                <button onclick="prosesDaftar()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3.5 px-4 rounded-xl shadow-lg transition-all text-sm mt-2">
+                    DAFTAR AKUN BARU
                 </button>
+                <p class="text-center text-xs text-slate-400 mt-4">Sudah punya akun? <button onclick="toggleForm('masuk')" class="text-indigo-400 font-bold hover:underline">Masuk di sini</button></p>
             </div>
-        </aside>
-
-        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50/50 dark:bg-slate-950">
             
-            <header class="shrink-0 z-20 glass-effect flex items-center justify-between px-6 lg:px-10 py-4 shadow-sm">
-                <div class="flex items-center space-x-4">
-                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="md:hidden text-slate-500 dark:text-slate-400 hover:text-brand-600 p-2.5 rounded-xl transition-colors">
-                        <i class="fa-solid fa-bars text-xl"></i>
-                    </button>
-                    <div>
-                        <h2 id="page-title" class="text-xl lg:text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">Dashboard</h2>
-                        <p id="page-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium hidden sm:block">Ringkasan operasional akademik.</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleFullScreenApp()" title="Layar Penuh" class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-indigo-500 flex items-center justify-center transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900">
-                        <i id="fullscreen-icon" class="fa-solid fa-expand"></i>
-                    </button>
-                    <button onclick="toggleDarkMode()" class="md:hidden w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-yellow-500 flex items-center justify-center transition-all">
-                        <i id="dark-mode-icon-mobile" class="fa-solid fa-moon"></i>
-                    </button>
-                    <button onclick="forceSaveNotification()" class="hidden sm:flex items-center bg-brand-50 dark:bg-emerald-950/60 text-brand-700 dark:text-brand-300 px-4 py-2 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-800 shadow-sm hover:bg-brand-100 transition-colors">
-                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Simpan Data
-                    </button>
-                    <div class="flex items-center space-x-3 border-l pl-3 border-slate-200 dark:border-slate-800">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white dark:ring-slate-800">
-                            ST
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <div id="mobile-menu-overlay" onclick="toggleMobileMenu(true)" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden transition-opacity"></div>
-            <div id="mobile-drawer" class="fixed inset-y-0 left-0 w-72 bg-slate-900 text-slate-100 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
-                <div class="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-white/5">
-                    <div class="flex items-center space-x-3">
-                        <img src="logo-pusat.png" class="w-8 h-8 rounded-lg shadow-md" alt="Logo Smart Teacher">
-                        <h1 class="font-extrabold text-base text-white">SMART TEACHER</h1>
-                    </div>
-                    <button onclick="toggleMobileMenu(true)" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                <div id="mobile-menu-list" class="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm custom-scrollbar"></div>
-                
-                <div class="mt-auto pt-4 pb-2 border-t border-slate-700/50 text-center">
-                    <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">
-                        SMART TEACHER v3.0 Integrated Workspace
-                    </p>
-                    <p class="text-[11px] text-slate-300 font-semibold mt-0.5">
-                        Dev: Muh. Nashir, S.Pd. <span class="text-purple-400 font-normal">(Anas Samudra H2A)</span>
-                    </p>
-                </div>
-            </div>
-
-            <main id="main-content" class="flex-1 overflow-y-auto p-4 lg:p-7 custom-scrollbar"></main>
+            <p id="auth-error-msg" class="text-rose-400 text-xs font-bold mt-4 hidden animate-pulse"></p>
         </div>
-    </div>
-
-    <!-- LACI SAMPING (EDGE PANEL) -->
-    <div id="edge-panel" class="fixed top-1/2 right-0 -translate-y-1/2 z-50 flex items-center transition-transform duration-300 translate-x-full no-print">
-        
-        <!-- Gagang Laci (Selalu Terlihat Sedikit di Pinggir Kanan) -->
-        <button onclick="toggleEdgePanel()" class="absolute -left-8 w-8 h-16 bg-slate-800/90 backdrop-blur-md text-slate-300 rounded-l-xl flex items-center justify-center shadow-[-4px_0_10px_rgba(0,0,0,0.3)] border-y border-l border-slate-600 hover:bg-slate-700 hover:text-white transition-all">
-            <i id="edge-icon" class="fa-solid fa-chevron-left text-sm transition-transform duration-300"></i>
-        </button>
-
-        <!-- Isi Laci Tombol (Bersembunyi di luar layar) -->
-        <div class="bg-slate-900/95 backdrop-blur-md shadow-2xl border-y border-l border-slate-700 rounded-l-2xl p-3 flex flex-col gap-3">
-            
-            <button onclick="switchTab('kuis'); toggleEdgePanel();" title="Kuis Interaktif" class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
-                <i class="fa-solid fa-gamepad"></i>
-            </button>
-            
-            <button onclick="switchTab('ai'); toggleEdgePanel();" title="Asisten AI Guru" class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
-                <i class="fa-solid fa-robot"></i>
-            </button>
-
-            <!-- Pintasan Presentation Studio -->
-            <button onclick="switchTab('presentation_studio'); toggleEdgePanel();" title="Presentation Studio" class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-lg flex items-center justify-center text-lg hover:scale-110 transition-transform">
-                <i class="fa-solid fa-person-chalkboard"></i>
-            </button>
-            
-        </div>
-    </div>
-    
+    </div>    
     <!-- MODAL PANDUAN CEPAT PENGGUNAAN -->
     <div id="guide-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[85] hidden flex items-center justify-center p-4 transition-all no-print">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-2xl w-full p-6 lg:p-8 transform transition-all border border-slate-100 dark:border-slate-800 fade-in">
@@ -4303,17 +4195,27 @@ function bukaPapanSkorPodium() {
             document.getElementById('bedah-soal-modal').classList.add('hidden');
         }
 
-        window.onload = async () => { 
-            // Tunggu sampai fungsi tarik data dan render Dashboard SELESAI 100%
-            await loadDatabase(); 
-            
-            // Setelah data lengkap terisi, BARU buka tirai loading-nya
+       window.addEventListener('DOMContentLoaded', async () => { 
+            try {
+                // Tarik data terlebih dahulu
+                await loadDatabase(); 
+            } catch(e) {
+                console.error("Gagal load database awal:", e);
+            }
+
+            // Singkirkan tirai pemuatan (Preloader) apa pun yang terjadi!
             const loader = document.getElementById('app-preloader');
             if(loader) {
                 loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
+                setTimeout(() => loader.style.display = 'none', 500);
             }
-        };
+
+            // Cek apakah guru sudah pernah login sebelumnya
+            const savedUser = localStorage.getItem('smart_teacher_user');
+            if (savedUser) {
+                bukaRuangKelas(savedUser);
+            }
+        });
   // Variable Buffer Undo
 let undoBufferSoal = null;
 let undoTimeoutId = null;
@@ -5400,13 +5302,35 @@ function updateTombolPlatformUI() {
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
             }
         }
-       // =========================================================
-        // SISTEM LOGIN MANDIRI (USERNAME & SANDI)
+      // =========================================================
+        // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
         // =========================================================
-        function prosesLoginMandiri() {
-            const user = document.getElementById('input-username').value.trim();
-            const pass = document.getElementById('input-password').value.trim();
-            const errorMsg = document.getElementById('login-error-msg');
+        const db = firebase.database();
+
+        function toggleForm(mode) {
+            const formMasuk = document.getElementById('form-masuk');
+            const formDaftar = document.getElementById('form-daftar');
+            const errorMsg = document.getElementById('auth-error-msg');
+            
+            errorMsg.classList.add('hidden'); // Bersihkan error saat pindah tab
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-password').value = '';
+
+            if (mode === 'daftar') {
+                formMasuk.classList.add('hidden');
+                formDaftar.classList.remove('hidden');
+            } else {
+                formDaftar.classList.add('hidden');
+                formMasuk.classList.remove('hidden');
+            }
+        }
+
+        function prosesLogin() {
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+            const errorMsg = document.getElementById('auth-error-msg');
 
             if (!user || !pass) {
                 errorMsg.innerText = "Username dan sandi wajib diisi!";
@@ -5414,11 +5338,66 @@ function updateTombolPlatformUI() {
                 return;
             }
 
-            errorMsg.classList.add('hidden');
+            // ATURAN 1: Cek apakah user benar-benar ada di database
+            db.ref('users/' + user).once('value').then((snapshot) => {
+                const akun = snapshot.val();
+                
+                if (!akun) {
+                    // JIKA ASAL KETIK -> TOLAK!
+                    errorMsg.innerText = "Akun tidak ditemukan! Silakan daftar terlebih dahulu.";
+                    errorMsg.classList.remove('hidden');
+                } else if (akun.password !== pass) {
+                    // JIKA SANDI SALAH -> TOLAK!
+                    errorMsg.innerText = "Sandi salah! Silakan periksa kembali.";
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    // JIKA BENAR -> BERHASIL MASUK
+                    errorMsg.classList.add('hidden');
+                    localStorage.setItem('smart_teacher_user', user);
+                    bukaRuangKelas(user);
+                }
+            }).catch((error) => {
+                errorMsg.innerText = "Koneksi database gagal: " + error.message;
+                errorMsg.classList.remove('hidden');
+            });
+        }
 
-            // Simpan sesi lokal di perangkat pengguna
-            localStorage.setItem('smart_teacher_user', user);
-            bukaRuangKelas(user);
+        function prosesDaftar() {
+            const user = document.getElementById('reg-username').value.trim();
+            const pass = document.getElementById('reg-password').value.trim();
+            const errorMsg = document.getElementById('auth-error-msg');
+
+            if (!user || !pass) {
+                errorMsg.innerText = "Username dan sandi wajib diisi!";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (user.includes(" ")) {
+                errorMsg.innerText = "Username tidak boleh ada spasi!";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // ATURAN 2: Cek apakah nama sudah dipakai orang lain
+            db.ref('users/' + user).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    // DAFTAR BERHASIL -> SIMPAN AKUN BARU
+                    const dataBaru = {
+                        username: user,
+                        password: pass,
+                        dibuatPada: new Date().toISOString()
+                    };
+                    db.ref('users/' + user).set(dataBaru).then(() => {
+                        errorMsg.classList.add('hidden');
+                        localStorage.setItem('smart_teacher_user', user);
+                        bukaRuangKelas(user);
+                    });
+                }
+            });
         }
 
         function bukaRuangKelas(username) {
@@ -5432,14 +5411,7 @@ function updateTombolPlatformUI() {
             }
             console.log("Masuk ke ruang kelas privat:", username);
         }
-
-        // Cek otomatis saat halaman dimuat
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('smart_teacher_user');
-            if (savedUser) {
-                bukaRuangKelas(savedUser);
-            }
-        });
+        
           </script>
    <!-- MODAL KELOLA BANK SOAL -->
 <div id="bank-soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[87] hidden flex items-center justify-center p-4 transition-all no-print">
