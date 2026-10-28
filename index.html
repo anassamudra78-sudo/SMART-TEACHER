@@ -5305,6 +5305,22 @@ function updateTombolPlatformUI() {
       // =========================================================
         // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
         // =========================================================
+        // =========================================================
+        // INISIALISASI FIREBASE & DATABASE
+        // =========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
+            authDomain: "smart-teacher-v3.firebaseapp.com",
+            projectId: "smart-teacher-v3",
+            storageBucket: "smart-teacher-v3.firebasestorage.app",
+            messagingSenderId: "984725799915",
+            appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
         const db = firebase.database();
 
         function toggleForm(mode) {
