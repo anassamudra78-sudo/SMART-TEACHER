@@ -5437,7 +5437,7 @@ function updateTombolPlatformUI() {
             }
         });
 
-        // Tombol Aksi Login Google (Menggunakan Redirect agar tidak macet di HP)
+        // Tombol Aksi Login Google (Metode Popup Aman untuk HP)
         function loginDenganGoogle() {
             const btn = document.getElementById('btn-login-google');
             const errorMsg = document.getElementById('login-error-msg');
@@ -5446,7 +5446,9 @@ function updateTombolPlatformUI() {
             btn.disabled = true;
             errorMsg.classList.add('hidden');
 
-            auth.signInWithRedirect(provider).catch((error) => {
+            auth.signInWithPopup(provider).then((result) => {
+                console.log("Login Berhasil:", result.user.displayName);
+            }).catch((error) => {
                 console.error("Error login:", error);
                 errorMsg.innerText = "Gagal masuk: " + error.message;
                 errorMsg.classList.remove('hidden');
