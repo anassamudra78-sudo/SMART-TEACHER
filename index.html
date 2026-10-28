@@ -5367,122 +5367,133 @@ function updateTombolPlatformUI() {
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
             }
         }
-     // Fungsi Pemastian Firebase Tanpa Variabel Eksternal
-        function getDB() {
-            if (!firebase.apps.length) {
-                firebase.initializeApp({
-                    apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
-                    authDomain: "smart-teacher-v3.firebaseapp.com",
-                    projectId: "smart-teacher-v3",
-                    storageBucket: "smart-teacher-v3.firebasestorage.app",
-                    messagingSenderId: "984725799915",
-                    appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
-                });
-            }
-            return firebase.database();
+     // =========================================================
+        // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
+        // =========================================================
+        
+        // 1. Nyalakan Firebase langsung dengan kuncinya
+        if (!firebase.apps.length) {
+            firebase.initializeApp({
+                apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
+                authDomain: "smart-teacher-v3.firebaseapp.com",
+                projectId: "smart-teacher-v3",
+                storageBucket: "smart-teacher-v3.firebasestorage.app",
+                messagingSenderId: "984725799915",
+                appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
+            });
         }
+        
+        // Gunakan var agar tidak error saat ditimpa
+        var db = firebase.database();
 
         function toggleForm(mode) {
-            const formMasuk = document.getElementById('form-masuk');
-            const formDaftar = document.getElementById('form-daftar');
-            const errorMsg = document.getElementById('auth-error-msg');
-            
-            errorMsg.classList.add('hidden');
+            document.getElementById('auth-error-msg').classList.add('hidden');
             document.getElementById('login-username').value = '';
             document.getElementById('login-password').value = '';
             document.getElementById('reg-username').value = '';
             document.getElementById('reg-password').value = '';
 
             if (mode === 'daftar') {
-                formMasuk.classList.add('hidden');
-                formDaftar.classList.remove('hidden');
+                document.getElementById('form-masuk').classList.add('hidden');
+                document.getElementById('form-daftar').classList.remove('hidden');
             } else {
-                formDaftar.classList.add('hidden');
-                formMasuk.classList.remove('hidden');
+                document.getElementById('form-daftar').classList.add('hidden');
+                document.getElementById('form-masuk').classList.remove('hidden');
             }
         }
 
         function prosesLogin() {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value.trim();
-            const errorMsg = document.getElementById('auth-error-msg');
+            var user = document.getElementById('login-username').value.trim();
+            var pass = document.getElementById('login-password').value.trim();
+            var errorMsg = document.getElementById('auth-error-msg');
 
-            if (!user || !pass) {
+            if (user === "" || pass === "") {
                 errorMsg.innerText = "Username dan sandi wajib diisi!";
                 errorMsg.classList.remove('hidden');
                 return;
             }
 
-            const validRegex = /^[a-zA-Z0-9_]+$/;
-            if (!validRegex.test(user)) {
-                errorMsg.innerText = "Gagal! Username hanya boleh huruf, angka, dan garis bawah (_).";
-                errorMsg.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                getDB().ref('users/' + user).once('value').then((snapshot) => {
-                    const akun = snapshot.val();
-                    
-                    if (!akun) {
-                        errorMsg.innerText = "Akun tidak ditemukan! Silakan daftar terlebih dahulu.";
-                        errorMsg.classList.remove('hidden');
-                    } else if (akun.password !== pass) {
-                        errorMsg.innerText = "Sandi salah! Silakan periksa kembali.";
-                        errorMsg.classList.remove('hidden');
-                    } else {
-                        errorMsg.classList.add('hidden');
-                        localStorage.setItem('smart_teacher_user', user);
-                        bukaRuangKelas(user);
-                    }
-                }).catch((error) => {
-                    errorMsg.innerText = "Koneksi database gagal: " + error.message;
-                    errorMsg.classList.remove('hidden');
-                });
-            } catch (err) {
-                errorMsg.innerText = "Sistem Error: " + err.message;
-                errorMsg.classList.remove('hidden');
-            }
-        }
-
-        function prosesDaftar() {
-            const user = document.getElementById('reg-username').value.trim();
-            const pass = document.getElementById('reg-password').value.trim();
-            const errorMsg = document.getElementById('auth-error-msg');
-
-            if (!user || !pass) {
-                errorMsg.innerText = "Username dan sandi wajib diisi!";
-                errorMsg.classList.remove('hidden');
-                return;
-            }
-
-            const validRegex = /^[a-zA-Z0-9_]+$/;
+            var validRegex = /^[a-zA-Z0-9_]+$/;
             if (!validRegex.test(user)) {
                 errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
                 errorMsg.classList.remove('hidden');
                 return;
             }
 
-            try {
-                getDB().ref('users/' + user).once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
-                        errorMsg.classList.remove('hidden');
-                    } else {
-                        const dataBaru = { username: user, password: pass, dibuatPada: new Date().toISOString() };
-                        getDB().ref('users/' + user).set(dataBaru).then(() => {
-                            errorMsg.classList.add('hidden');
-                            localStorage.setItem('smart_teacher_user', user);
-                            bukaRuangKelas(user);
-                        });
-                    }
-                }).catch((error) => {
-                    errorMsg.innerText = "Gagal mendaftar: " + error.message;
-                    errorMsg.classList.remove('hidden');
-                });
-            } catch (err) {
-                errorMsg.innerText = "Sistem Error: " + err.message;
+            errorMsg.innerText = "Memeriksa...";
+            errorMsg.classList.remove('hidden', 'text-rose-400');
+            errorMsg.classList.add('text-amber-400');
+
+            db.ref('users/' + user).once('value').then(function(snapshot) {
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                
+                var akun = snapshot.val();
+                if (!akun) {
+                    errorMsg.innerText = "Akun tidak ditemukan! Silakan daftar terlebih dahulu.";
+                } else if (akun.password !== pass) {
+                    errorMsg.innerText = "Sandi salah! Silakan periksa kembali.";
+                } else {
+                    errorMsg.classList.add('hidden');
+                    localStorage.setItem('smart_teacher_user', user);
+                    bukaRuangKelas(user);
+                }
+            }).catch(function(error) {
+                errorMsg.innerText = "Koneksi database gagal: " + error.message;
                 errorMsg.classList.remove('hidden');
+            });
+        }
+
+        function prosesDaftar() {
+            var user = document.getElementById('reg-username').value.trim();
+            var pass = document.getElementById('reg-password').value.trim();
+            var errorMsg = document.getElementById('auth-error-msg');
+
+            if (user === "" || pass === "") {
+                errorMsg.innerText = "Username dan sandi wajib diisi!";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            var validRegex = /^[a-zA-Z0-9_]+$/;
+            if (!validRegex.test(user)) {
+                errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            errorMsg.innerText = "Mendaftarkan...";
+            errorMsg.classList.remove('hidden', 'text-rose-400');
+            errorMsg.classList.add('text-amber-400');
+
+            db.ref('users/' + user).once('value').then(function(snapshot) {
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+
+                if (snapshot.exists()) {
+                    errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
+                } else {
+                    var dataBaru = { username: user, password: pass, dibuatPada: new Date().toISOString() };
+                    db.ref('users/' + user).set(dataBaru).then(function() {
+                        errorMsg.classList.add('hidden');
+                        localStorage.setItem('smart_teacher_user', user);
+                        bukaRuangKelas(user);
+                    });
+                }
+            }).catch(function(error) {
+                errorMsg.innerText = "Gagal mendaftar: " + error.message;
+                errorMsg.classList.remove('hidden');
+            });
+        }
+
+        function bukaRuangKelas(username) {
+            var loginScreen = document.getElementById('login-screen');
+            if (loginScreen) {
+                loginScreen.style.opacity = '0';
+                loginScreen.style.pointerEvents = 'none';
+                setTimeout(function() {
+                    loginScreen.style.display = 'none';
+                }, 300);
             }
         }
         
