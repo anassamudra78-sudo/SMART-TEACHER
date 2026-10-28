@@ -5478,23 +5478,17 @@ function updateTombolPlatformUI() {
         // 3. Tombol Eksekusi Menggunakan Redirect
         function loginDenganGoogle() {
             const btn = document.getElementById('btn-login-google');
-            const errorMsg = document.getElementById('login-error-msg');
-            
-            if (!btn) return;
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
-            btn.disabled = true;
-            if (errorMsg) errorMsg.classList.add('hidden');
-
-            // Mengalihkan halaman penuh ke Google (Anti Blokir Pop-up HP)
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-3"></i> MEMPROSES...';
+                btn.disabled = true;
+            }
             auth.signInWithRedirect(provider).catch((error) => {
-                console.error("Gagal Redirect:", error);
-                if (errorMsg) {
-                    errorMsg.innerText = "Gagal: " + error.message;
-                    errorMsg.classList.remove('hidden');
+                console.error("Gagal Login:", error);
+                alert("Gagal masuk: " + error.message);
+                if (btn) {
+                    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
+                    btn.disabled = false;
                 }
-                btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6 mr-3" alt="Google"> LANJUTKAN DENGAN GOOGLE';
-                btn.disabled = false;
             });
         }
         
