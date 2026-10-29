@@ -5402,16 +5402,23 @@ function updateTombolPlatformUI() {
     try {
         let url = gasAuthUrl + "?action=login&username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
         let response = await fetch(url);
-        let result = await response.json();
+        let text = await response.text();
+
+        // Jika balasan dari Google berupa HTML, berikan peringatan jelas
+        if (text.trim().startsWith("<")) {
+            throw new Error("Google memblokir akses. Buka URL Apps Script di tab baru untuk verifikasi izin.");
+        }
+
+        let result = JSON.parse(text);
 
         if (result.status === "success") {
             localStorage.setItem('smart_teacher_user', user);
             document.getElementById('login-screen').style.display = 'none';
         } else {
-            errorMsg.innerText = "Username atau sandi salah!";
+            errorMsg.innerText = result.message || "Username atau sandi salah!";
         }
     } catch (err) {
-        errorMsg.innerText = "Gagal terhubung: " + err.message;
+        errorMsg.innerText = "Gagal: " + err.message;
     }
 }
 
@@ -5432,16 +5439,22 @@ async function prosesDaftar() {
     try {
         let url = gasAuthUrl + "?action=register&username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
         let response = await fetch(url);
-        let result = await response.json();
+        let text = await response.text();
+
+        if (text.trim().startsWith("<")) {
+            throw new Error("Google memblokir akses. Buka URL Apps Script di tab baru untuk verifikasi izin.");
+        }
+
+        let result = JSON.parse(text);
 
         if (result.status === "success") {
             localStorage.setItem('smart_teacher_user', user);
             document.getElementById('login-screen').style.display = 'none';
         } else {
-            errorMsg.innerText = "Username sudah dipakai!";
+            errorMsg.innerText = result.message || "Username sudah dipakai!";
         }
     } catch (err) {
-        errorMsg.innerText = "Gagal mendaftar: " + err.message;
+        errorMsg.innerText = "Gagal: " + err.message;
     }
 }
         
