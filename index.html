@@ -16,10 +16,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- FIREBASE SDK (Sistem Cloud & Keamanan) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -5367,25 +5363,127 @@ function updateTombolPlatformUI() {
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
             }
         }
-     // =========================================================
-        // SISTEM AUTENTIKASI: MASUK & DAFTAR MANDIRI
+    // =========================================================
+        // SISTEM AUTENTIKASI GOOGLE SHEETS (ONLINE & TANPA FIREWALL)
         // =========================================================
         
-        // 1. Nyalakan Firebase langsung dengan kuncinya
-        if (!firebase.apps.length) {
-            firebase.initializeApp({
-                apiKey: "AIzaSyCBI97YFQtVzNv96VtuuB0izM30ec8kLOU",
-                authDomain: "smart-teacher-v3.firebaseapp.com",
-                databaseURL: "https://smart-teacher-v3-default-rtdb.firebaseio.com",
-                projectId: "smart-teacher-v3",
-                storageBucket: "smart-teacher-v3.firebasestorage.app",
-                messagingSenderId: "984725799915",
-                appId: "1:984725799915:web:2ad9f07dec4940b8a5cfae"
-            });
+        var gasAuthUrl = "https://script.google.com/macros/s/AKfycbxIY8fAXrZDY3umrlbuDOcU_DrXTuZ9AE2s5vPYVTSu4J5QDpabwxdnw41K1_-VddeJ5A/exec";
+
+        function toggleForm(mode) {
+            document.getElementById('auth-error-msg').classList.add('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-password').value = '';
+
+            if (mode === 'daftar') {
+                document.getElementById('form-masuk').classList.add('hidden');
+                document.getElementById('form-daftar').classList.remove('hidden');
+            } else {
+                document.getElementById('form-daftar').classList.add('hidden');
+                document.getElementById('form-masuk').classList.remove('hidden');
+            }
         }
-        
-        // Gunakan var agar tidak error saat ditimpa
-        var db = firebase.database();
+
+        async function prosesLogin() {
+            var user = document.getElementById('login-username').value.trim();
+            var pass = document.getElementById('login-password').value.trim();
+            var errorMsg = document.getElementById('auth-error-msg');
+
+            if (user === "" || pass === "") {
+                errorMsg.innerText = "Username dan sandi wajib diisi!";
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                return;
+            }
+
+            errorMsg.innerText = "Menghubungkan ke Google Sheets...";
+            errorMsg.classList.remove('hidden', 'text-rose-400');
+            errorMsg.classList.add('text-amber-400');
+
+            try {
+                let response = await fetch(gasAuthUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "login", username: user, password: pass })
+                });
+                let result = await response.json();
+
+                if (result.status === "success") {
+                    errorMsg.classList.add('hidden');
+                    localStorage.setItem('smart_teacher_user', user);
+                    
+                    document.getElementById('login-screen').style.opacity = '0';
+                    setTimeout(function() {
+                        document.getElementById('login-screen').style.display = 'none';
+                    }, 500);
+                } else {
+                    errorMsg.classList.remove('text-amber-400');
+                    errorMsg.classList.add('text-rose-400');
+                    errorMsg.innerText = "Akun tidak ditemukan atau sandi salah!";
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                errorMsg.innerText = "Gagal terhubung: " + err.message;
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        async function prosesDaftar() {
+            var user = document.getElementById('reg-username').value.trim();
+            var pass = document.getElementById('reg-password').value.trim();
+            var errorMsg = document.getElementById('auth-error-msg');
+
+            if (user === "" || pass === "") {
+                errorMsg.innerText = "Username dan sandi wajib diisi!";
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                return;
+            }
+
+            var validRegex = /^[a-zA-Z0-9_]+$/;
+            if (!validRegex.test(user)) {
+                errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                return;
+            }
+
+            errorMsg.innerText = "Menyimpan ke Google Sheets...";
+            errorMsg.classList.remove('hidden', 'text-rose-400');
+            errorMsg.classList.add('text-amber-400');
+
+            try {
+                let response = await fetch(gasAuthUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "register", username: user, password: pass })
+                });
+                let result = await response.json();
+
+                if (result.status === "success") {
+                    errorMsg.classList.add('hidden');
+                    localStorage.setItem('smart_teacher_user', user);
+
+                    document.getElementById('login-screen').style.opacity = '0';
+                    setTimeout(function() {
+                        document.getElementById('login-screen').style.display = 'none';
+                    }, 500);
+                } else {
+                    errorMsg.classList.remove('text-amber-400');
+                    errorMsg.classList.add('text-rose-400');
+                    errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                errorMsg.innerText = "Gagal mendaftar: " + err.message;
+                errorMsg.classList.remove('hidden');
+            }
+        }
 
         function toggleForm(mode) {
             document.getElementById('auth-error-msg').classList.add('hidden');
