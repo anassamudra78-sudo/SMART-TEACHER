@@ -5385,105 +5385,65 @@ function updateTombolPlatformUI() {
             }
         }
 
-        async function prosesLogin() {
-            var user = document.getElementById('login-username').value.trim();
-            var pass = document.getElementById('login-password').value.trim();
-            var errorMsg = document.getElementById('auth-error-msg');
+      async function prosesLogin() {
+    var user = document.getElementById('login-username').value.trim();
+    var pass = document.getElementById('login-password').value.trim();
+    var errorMsg = document.getElementById('auth-error-msg');
 
-            if (user === "" || pass === "") {
-                errorMsg.innerText = "Username dan sandi wajib diisi!";
-                errorMsg.classList.remove('hidden', 'text-amber-400');
-                errorMsg.classList.add('text-rose-400');
-                return;
-            }
+    if (user === "" || pass === "") {
+        errorMsg.innerText = "Username dan sandi wajib diisi!";
+        errorMsg.classList.remove('hidden');
+        return;
+    }
 
-            errorMsg.innerText = "Menghubungkan ke Google Sheets...";
-            errorMsg.classList.remove('hidden', 'text-rose-400');
-            errorMsg.classList.add('text-amber-400');
+    errorMsg.innerText = "Menghubungkan...";
+    errorMsg.classList.remove('hidden');
 
-            try {
-                let response = await fetch(gasAuthUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "login", username: user, password: pass })
-                });
-                let result = await response.json();
+    try {
+        let url = gasAuthUrl + "?action=login&username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
+        let response = await fetch(url);
+        let result = await response.json();
 
-                if (result.status === "success") {
-                    errorMsg.classList.add('hidden');
-                    localStorage.setItem('smart_teacher_user', user);
-                    
-                    document.getElementById('login-screen').style.opacity = '0';
-                    setTimeout(function() {
-                        document.getElementById('login-screen').style.display = 'none';
-                    }, 500);
-                } else {
-                    errorMsg.classList.remove('text-amber-400');
-                    errorMsg.classList.add('text-rose-400');
-                    errorMsg.innerText = "Akun tidak ditemukan atau sandi salah!";
-                    errorMsg.classList.remove('hidden');
-                }
-            } catch (err) {
-                errorMsg.classList.remove('text-amber-400');
-                errorMsg.classList.add('text-rose-400');
-                errorMsg.innerText = "Gagal terhubung: " + err.message;
-                errorMsg.classList.remove('hidden');
-            }
+        if (result.status === "success") {
+            localStorage.setItem('smart_teacher_user', user);
+            document.getElementById('login-screen').style.display = 'none';
+        } else {
+            errorMsg.innerText = "Username atau sandi salah!";
         }
+    } catch (err) {
+        errorMsg.innerText = "Gagal terhubung: " + err.message;
+    }
+}
 
-        async function prosesDaftar() {
-            var user = document.getElementById('reg-username').value.trim();
-            var pass = document.getElementById('reg-password').value.trim();
-            var errorMsg = document.getElementById('auth-error-msg');
+async function prosesDaftar() {
+    var user = document.getElementById('reg-username').value.trim();
+    var pass = document.getElementById('reg-password').value.trim();
+    var errorMsg = document.getElementById('auth-error-msg');
 
-            if (user === "" || pass === "") {
-                errorMsg.innerText = "Username dan sandi wajib diisi!";
-                errorMsg.classList.remove('hidden', 'text-amber-400');
-                errorMsg.classList.add('text-rose-400');
-                return;
-            }
+    if (user === "" || pass === "") {
+        errorMsg.innerText = "Username dan sandi wajib diisi!";
+        errorMsg.classList.remove('hidden');
+        return;
+    }
 
-            var validRegex = /^[a-zA-Z0-9_]+$/;
-            if (!validRegex.test(user)) {
-                errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
-                errorMsg.classList.remove('hidden', 'text-amber-400');
-                errorMsg.classList.add('text-rose-400');
-                return;
-            }
+    errorMsg.innerText = "Menyimpan...";
+    errorMsg.classList.remove('hidden');
 
-            errorMsg.innerText = "Menyimpan ke Google Sheets...";
-            errorMsg.classList.remove('hidden', 'text-rose-400');
-            errorMsg.classList.add('text-amber-400');
+    try {
+        let url = gasAuthUrl + "?action=register&username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
+        let response = await fetch(url);
+        let result = await response.json();
 
-            try {
-                let response = await fetch(gasAuthUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "register", username: user, password: pass })
-                });
-                let result = await response.json();
-
-                if (result.status === "success") {
-                    errorMsg.classList.add('hidden');
-                    localStorage.setItem('smart_teacher_user', user);
-
-                    document.getElementById('login-screen').style.opacity = '0';
-                    setTimeout(function() {
-                        document.getElementById('login-screen').style.display = 'none';
-                    }, 500);
-                } else {
-                    errorMsg.classList.remove('text-amber-400');
-                    errorMsg.classList.add('text-rose-400');
-                    errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
-                    errorMsg.classList.remove('hidden');
-                }
-            } catch (err) {
-                errorMsg.classList.remove('text-amber-400');
-                errorMsg.classList.add('text-rose-400');
-                errorMsg.innerText = "Gagal mendaftar: " + err.message;
-                errorMsg.classList.remove('hidden');
-            }
+        if (result.status === "success") {
+            localStorage.setItem('smart_teacher_user', user);
+            document.getElementById('login-screen').style.display = 'none';
+        } else {
+            errorMsg.innerText = "Username sudah dipakai!";
         }
+    } catch (err) {
+        errorMsg.innerText = "Gagal mendaftar: " + err.message;
+    }
+}
         
           </script>
    <!-- MODAL KELOLA BANK SOAL -->
