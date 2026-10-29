@@ -5236,8 +5236,10 @@ function updateTombolPlatformUI() {
             const siswa = AppState.db.siswa.find(s => s.id === id);
             if(!siswa) return;
             
-            // Gunakan NIS sebagai data utama QR. Jika belum ada NIS, pakai ID unik sistem.
-            const targetData = siswa.nis || siswa.id; 
+           // FORMAT SMART QR: NIS|Nama Siswa|Nama Kelas
+            const kelasSiswa = AppState.db.kelas.find(k => k.id === siswa.kelasId);
+            const namaKelas = kelasSiswa ? kelasSiswa.kode : "-";
+            const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetData)}&margin=10`;
 
             const modalHtml = `
