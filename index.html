@@ -4738,8 +4738,7 @@ if (mapelObserverTarget) {
                 initialX = e.clientX - xOffset;
                 initialY = e.clientY - yOffset;
             }
-            // Hanya bisa digeser jika yang disentuh adalah gagangnya
-            if (e.target === dragHandle || dragHandle.contains(e.target)) {
+            if (e.target === dragHandle || (dragHandle && dragHandle.contains(e.target))) {
                 isDraggingFab = true;
             }
         }
@@ -4751,8 +4750,8 @@ if (mapelObserverTarget) {
         }
 
         function dragFab(e) {
-            if (isDraggingFab) {
-                e.preventDefault(); // Mencegah layar ikut tergulir saat menggeser tombol
+            if (isDraggingFab && fabContainer) {
+                e.preventDefault(); 
                 if (e.type === "touchmove") {
                     currentX = e.touches[0].clientX - initialX;
                     currentY = e.touches[0].clientY - initialY;
@@ -4766,13 +4765,15 @@ if (mapelObserverTarget) {
             }
         }
 
-        fabContainer.addEventListener("touchstart", dragStartFab, { passive: false });
-        fabContainer.addEventListener("touchend", dragEndFab, { passive: false });
-        fabContainer.addEventListener("touchmove", dragFab, { passive: false });
-        fabContainer.addEventListener("mousedown", dragStartFab);
-        document.addEventListener("mouseup", dragEndFab);
-        document.addEventListener("mousemove", dragFab);
-       
+        // PENGAMANAN (ANTI-CRASH): Hanya pasang event listener JIKA elemennya ada di HTML
+        if (fabContainer && dragHandle) {
+            fabContainer.addEventListener("touchstart", dragStartFab, { passive: false });
+            fabContainer.addEventListener("touchend", dragEndFab, { passive: false });
+            fabContainer.addEventListener("touchmove", dragFab, { passive: false });
+            fabContainer.addEventListener("mousedown", dragStartFab);
+            document.addEventListener("mouseup", dragEndFab);
+            document.addEventListener("mousemove", dragFab);
+        }
                // --- MESIN LACI SAMPING (EDGE PANEL) ---
         function toggleEdgePanel() {
             const panel = document.getElementById('edge-panel');
@@ -5365,16 +5366,19 @@ function updateTombolPlatformUI() {
 
       // --- FUNGSI CEK SETUP AWAL SAAT APLIKASI DIBUKA ---
 window.addEventListener('DOMContentLoaded', async () => { 
+    // PAKSA PRELOADER HILANG DALAM 1 DETIK (MENCEGAH STUCK DI AWAL)
+    setTimeout(() => {
+        const loader = document.getElementById('app-preloader');
+        if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }
+    }, 1000);
+
     try {
         await loadDatabase(); 
     } catch(e) {
         console.error("Gagal load database awal:", e);
-    }
-
-    const loader = document.getElementById('app-preloader');
-    if(loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.style.display = 'none', 500);
     }
 
     // GEMBOK GANDA: Hanya masuk otomatis JIKA ada riwayat User DAN ada Tautan URL
@@ -5385,11 +5389,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         const loginScreen = document.getElementById('login-screen');
         if (loginScreen) loginScreen.style.display = 'none';
     } else {
-        // Jika salah satu kosong (aplikasi baru/link kosong), paksa cek & hapus memori
         cekDanValidasiGasUrl();
     }
-});
-function cekDanValidasiGasUrl() {
+});function cekDanValidasiGasUrl() {
     const savedUrl = localStorage.getItem('ST_GAS_URL') || "";
     const loginScreen = document.getElementById('login-screen');
     const setupModal = document.getElementById('setup-db-modal');
@@ -5425,6 +5427,20 @@ function simpanSetupGasUrl() {
 
 function tutupModalSetup() {
     document.getElementById('setup-db-modal').classList.add('hidden');
+}
+function salinKodeBackend() {
+    var copyText = document.getElementById("kode-backend-gas");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // Untuk perangkat mobile
+    
+    try {
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert("Kode berhasil disalin! Silakan paste di Google Apps Script.");
+        });
+    } catch (err) {
+        document.execCommand('copy');
+        alert("Kode berhasil disalin! Silakan paste di Google Apps Script.");
+    }
 }
 
 // --- FUNGSI LOGIN & DAFTAR DINAMIS (MENYESUAIKAN LINK GOOGLE SHEETS GURU) ---
@@ -5511,9 +5527,12 @@ async function prosesDaftar() {
         errorMsg.innerText = "Gagal: " + err.message;
     }
 }
-        
-          </script>
-          <!-- MODAL PANDUAN & SETUP DATABASE MANDIRI -->
+</script> <!-- SOLUSI 1 & 2: TAG SCRIPT UTAMA DITUTUP DI SINI (SEBELUM MODAL HTML DIMULAI) -->
+
+<!-- ==================== AREA MODAL HTML ==================== -->
+<!-- SOLUSI 3: SEMUA MODAL HTML BERADA DI LUAR TAG SCRIPT -->
+
+<!-- MODAL PANDUAN & SETUP DATABASE MANDIRI -->
 <div id="setup-db-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[99999] hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-[2.5rem] p-6 lg:p-8 max-w-xl w-full text-white shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div class="text-center mb-6">
@@ -5536,13 +5555,37 @@ async function prosesDaftar() {
         <!-- Teks Panduan Ringkas -->
         <div class="text-left space-y-3 bg-slate-950/50 p-4 rounded-2xl border border-slate-800 text-xs text-slate-300">
             <p class="font-black text-amber-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-lightbulb mr-1"></i> Belum punya Tautan / Script?</p>
-            <ol class="list-decimal list-inside space-y-2 text-slate-400">
+            <ol class="list-decimal list-inside space-y-2 text-slate-400 mb-3">
                 <li>Buat file <b class="text-white">Google Sheets baru</b> di Google Drive Anda.</li>
                 <li>Buka menu atas: <b class="text-white">Ekstensi > Apps Script</b>.</li>
-                <li>Hapus kode bawaan, lalu paste kode backend *Smart Teacher* yang sudah disiapkan.</li>
+                <li>Hapus kode bawaan, lalu <b class="text-white">salin (copy) kode di bawah ini</b> dan paste ke sana.</li>
                 <li>Klik <b class="text-white">Terapkan (Deploy) > Kelola penerapan > Aplikasi web</b> (Akses: <i>Siapa saja</i>).</li>
                 <li>Salin tautan berakhiran <b class="text-white">/exec</b>, lalu tempel ke kotak di atas!</li>
             </ol>
+            
+            <!-- KOTAK KODE SCRIPT UNTUK DISALIN USER -->
+            <div class="relative bg-slate-900 border border-slate-700 rounded-xl p-3 mt-2">
+                <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                    <span class="text-[10px] font-bold text-slate-400">Kode Backend (Code.gs)</span>
+                    <button onclick="salinKodeBackend()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-1.5 px-3 rounded-lg text-[10px] transition-all border border-slate-600 shadow-sm flex items-center">
+                        <i class="fa-regular fa-copy mr-1.5"></i> Salin Kode
+                    </button>
+                </div>
+                <textarea id="kode-backend-gas" readonly class="w-full h-24 bg-transparent text-[10px] font-mono text-slate-300 outline-none resize-none custom-scrollbar">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.getRange(1, 1).setValue(JSON.stringify(data));
+  return ContentService.createTextOutput(JSON.stringify({"status": "success", "message": "Data tersimpan"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getRange(1, 1).getValue();
+  return ContentService.createTextOutput(data || "{}").setMimeType(ContentService.MimeType.JSON);
+}
+                </textarea>
+            </div>
         </div>
 
         <button onclick="tutupModalSetup()" class="mt-6 w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold py-2.5 rounded-xl text-xs transition-all">
@@ -5550,7 +5593,8 @@ async function prosesDaftar() {
         </button>
     </div>
 </div>
-   <!-- MODAL KELOLA BANK SOAL -->
+
+<!-- MODAL KELOLA BANK SOAL -->
 <div id="bank-soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[87] hidden flex items-center justify-center p-4 transition-all no-print">
     <div class="bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 lg:p-8 transform transition-all border border-indigo-500/30 text-white flex flex-col max-h-[90vh]">
         <div class="flex justify-between items-center border-b border-white/10 pb-4 shrink-0">
