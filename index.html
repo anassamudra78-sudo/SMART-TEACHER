@@ -5366,8 +5366,6 @@ function updateTombolPlatformUI() {
     // =========================================================
         // SISTEM AUTENTIKASI GOOGLE SHEETS (ONLINE & TANPA FIREWALL)
         // =========================================================
-        
-        var gasAuthUrl = "https://script.google.com/macros/s/AKfycbxIY8fAXrZDY3umrlbuDOcU_DrXTuZ9AE2s5vPYVTSu4J5QDpabwxdnw41K1_-VddeJ5A/exec"
 
         function toggleForm(mode) {
             document.getElementById('auth-error-msg').classList.add('hidden');
@@ -5385,10 +5383,53 @@ function updateTombolPlatformUI() {
             }
         }
 
-      async function prosesLogin() {
+      // --- FUNGSI CEK SETUP AWAL SAAT APLIKASI DIBUKA ---
+window.addEventListener('DOMContentLoaded', () => {
+    cekDanValidasiGasUrl();
+});
+
+function cekDanValidasiGasUrl() {
+    const savedUrl = localStorage.getItem('ST_GAS_URL') || "";
+    const loginScreen = document.getElementById('login-screen');
+    const setupModal = document.getElementById('setup-db-modal');
+
+    if (!savedUrl || !savedUrl.startsWith("http")) {
+        // Jika link belum diisi, sembunyikan layar login utama, munculkan panduan setup
+        if (setupModal) setupModal.classList.remove('hidden');
+        if (loginScreen) loginScreen.classList.add('hidden');
+    } else {
+        if (setupModal) setupModal.classList.add('hidden');
+    }
+}
+
+function simpanSetupGasUrl() {
+    const inputUrl = document.getElementById('modal-gas-url-input').value.trim();
+    if (!inputUrl || !inputUrl.startsWith("http")) {
+        return alert("Harap masukkan tautan Web App Apps Script yang valid berakhiran /exec!");
+    }
+    
+    localStorage.setItem('ST_GAS_URL', inputUrl);
+    AppState.config.gasUrl = inputUrl;
+    
+    alert("Tautan database berhasil disimpan! Memuat ulang aplikasi...");
+    window.location.reload();
+}
+
+function tutupModalSetup() {
+    document.getElementById('setup-db-modal').classList.add('hidden');
+}
+
+// --- FUNGSI LOGIN & DAFTAR DINAMIS (MENYESUAIKAN LINK GOOGLE SHEETS GURU) ---
+async function prosesLogin() {
     var user = document.getElementById('login-username').value.trim();
     var pass = document.getElementById('login-password').value.trim();
     var errorMsg = document.getElementById('auth-error-msg');
+    
+    var gasAuthUrl = localStorage.getItem('ST_GAS_URL') || "";
+    if (!gasAuthUrl) {
+        cekDanValidasiGasUrl();
+        return;
+    }
 
     if (user === "" || pass === "") {
         errorMsg.innerText = "Username dan sandi wajib diisi!";
@@ -5396,7 +5437,7 @@ function updateTombolPlatformUI() {
         return;
     }
 
-    errorMsg.innerText = "Menghubungkan...";
+    errorMsg.innerText = "Menghubungkan ke database Anda...";
     errorMsg.classList.remove('hidden');
 
     try {
@@ -5404,9 +5445,8 @@ function updateTombolPlatformUI() {
         let response = await fetch(url);
         let text = await response.text();
 
-        // Jika balasan dari Google berupa HTML, berikan peringatan jelas
         if (text.trim().startsWith("<")) {
-            throw new Error("Google memblokir akses. Buka URL Apps Script di tab baru untuk verifikasi izin.");
+            throw new Error("Akses diblokir Google. Pastikan izin Web App diatur ke 'Siapa saja'.");
         }
 
         let result = JSON.parse(text);
@@ -5426,6 +5466,12 @@ async function prosesDaftar() {
     var user = document.getElementById('reg-username').value.trim();
     var pass = document.getElementById('reg-password').value.trim();
     var errorMsg = document.getElementById('auth-error-msg');
+    
+    var gasAuthUrl = localStorage.getItem('ST_GAS_URL') || "";
+    if (!gasAuthUrl) {
+        cekDanValidasiGasUrl();
+        return;
+    }
 
     if (user === "" || pass === "") {
         errorMsg.innerText = "Username dan sandi wajib diisi!";
@@ -5433,7 +5479,7 @@ async function prosesDaftar() {
         return;
     }
 
-    errorMsg.innerText = "Menyimpan...";
+    errorMsg.innerText = "Mendaftarkan akun baru ke database Anda...";
     errorMsg.classList.remove('hidden');
 
     try {
@@ -5442,7 +5488,7 @@ async function prosesDaftar() {
         let text = await response.text();
 
         if (text.trim().startsWith("<")) {
-            throw new Error("Google memblokir akses. Buka URL Apps Script di tab baru untuk verifikasi izin.");
+            throw new Error("Akses diblokir Google. Pastikan izin Web App diatur ke 'Siapa saja'.");
         }
 
         let result = JSON.parse(text);
