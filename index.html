@@ -5409,37 +5409,57 @@ function updateTombolPlatformUI() {
 
             if (user === "" || pass === "") {
                 errorMsg.innerText = "Username dan sandi wajib diisi!";
-                errorMsg.classList.remove('hidden');
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
                 return;
             }
 
             var validRegex = /^[a-zA-Z0-9_]+$/;
             if (!validRegex.test(user)) {
                 errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
-                errorMsg.classList.remove('hidden');
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
                 return;
             }
 
-            errorMsg.innerText = "Memeriksa...";
+            errorMsg.innerText = "Menghubungkan ke server...";
             errorMsg.classList.remove('hidden', 'text-rose-400');
             errorMsg.classList.add('text-amber-400');
 
+            // Pengaman waktu: Jika dalam 4 detik tidak ada respons, paksa beri tahu
+            var isTimeout = false;
+            var timer = setTimeout(function() {
+                isTimeout = true;
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                errorMsg.innerText = "Koneksi ke database terhalang jaringan/firewall.";
+            }, 4000);
+
             db.ref('users/' + user).once('value').then(function(snapshot) {
+                if (isTimeout) return; // Abaikan jika sudah keburu timeout
+                clearTimeout(timer);
+
                 errorMsg.classList.remove('text-amber-400');
                 errorMsg.classList.add('text-rose-400');
                 
                 var akun = snapshot.val();
                 if (!akun) {
                     errorMsg.innerText = "Akun tidak ditemukan! Silakan daftar terlebih dahulu.";
+                    errorMsg.classList.remove('hidden');
                 } else if (akun.password !== pass) {
                     errorMsg.innerText = "Sandi salah! Silakan periksa kembali.";
+                    errorMsg.classList.remove('hidden');
                 } else {
                     errorMsg.classList.add('hidden');
                     localStorage.setItem('smart_teacher_user', user);
                     bukaRuangKelas(user);
                 }
             }).catch(function(error) {
-                errorMsg.innerText = "Koneksi database gagal: " + error.message;
+                if (isTimeout) return;
+                clearTimeout(timer);
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                errorMsg.innerText = "Gagal: " + error.message;
                 errorMsg.classList.remove('hidden');
             });
         }
@@ -5451,27 +5471,41 @@ function updateTombolPlatformUI() {
 
             if (user === "" || pass === "") {
                 errorMsg.innerText = "Username dan sandi wajib diisi!";
-                errorMsg.classList.remove('hidden');
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
                 return;
             }
 
             var validRegex = /^[a-zA-Z0-9_]+$/;
             if (!validRegex.test(user)) {
                 errorMsg.innerText = "Username hanya boleh huruf, angka, dan tanpa spasi!";
-                errorMsg.classList.remove('hidden');
+                errorMsg.classList.remove('hidden', 'text-amber-400');
+                errorMsg.classList.add('text-rose-400');
                 return;
             }
 
-            errorMsg.innerText = "Mendaftarkan...";
+            errorMsg.innerText = "Memproses pendaftaran...";
             errorMsg.classList.remove('hidden', 'text-rose-400');
             errorMsg.classList.add('text-amber-400');
 
+            var isTimeout = false;
+            var timer = setTimeout(function() {
+                isTimeout = true;
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
+                errorMsg.innerText = "Koneksi ke database terhalang jaringan/firewall.";
+            }, 4000);
+
             db.ref('users/' + user).once('value').then(function(snapshot) {
+                if (isTimeout) return;
+                clearTimeout(timer);
+
                 errorMsg.classList.remove('text-amber-400');
                 errorMsg.classList.add('text-rose-400');
 
                 if (snapshot.exists()) {
                     errorMsg.innerText = "Username sudah dipakai! Silakan gunakan nama lain.";
+                    errorMsg.classList.remove('hidden');
                 } else {
                     var dataBaru = { username: user, password: pass, dibuatPada: new Date().toISOString() };
                     db.ref('users/' + user).set(dataBaru).then(function() {
@@ -5481,20 +5515,13 @@ function updateTombolPlatformUI() {
                     });
                 }
             }).catch(function(error) {
+                if (isTimeout) return;
+                clearTimeout(timer);
+                errorMsg.classList.remove('text-amber-400');
+                errorMsg.classList.add('text-rose-400');
                 errorMsg.innerText = "Gagal mendaftar: " + error.message;
                 errorMsg.classList.remove('hidden');
             });
-        }
-
-        function bukaRuangKelas(username) {
-            var loginScreen = document.getElementById('login-screen');
-            if (loginScreen) {
-                loginScreen.style.opacity = '0';
-                loginScreen.style.pointerEvents = 'none';
-                setTimeout(function() {
-                    loginScreen.style.display = 'none';
-                }, 300);
-            }
         }
         
           </script>
