@@ -4256,27 +4256,7 @@ function bukaPapanSkorPodium() {
             document.getElementById('bedah-soal-modal').classList.add('hidden');
         }
 
-       window.addEventListener('DOMContentLoaded', async () => { 
-            try {
-                // Tarik data terlebih dahulu
-                await loadDatabase(); 
-            } catch(e) {
-                console.error("Gagal load database awal:", e);
-            }
-
-            // Singkirkan tirai pemuatan (Preloader) apa pun yang terjadi!
-            const loader = document.getElementById('app-preloader');
-            if(loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-            }
-
-            // Cek apakah guru sudah pernah login sebelumnya
-            const savedUser = localStorage.getItem('smart_teacher_user');
-            if (savedUser) {
-                bukaRuangKelas(savedUser);
-            }
-        });
+       
   // Variable Buffer Undo
 let undoBufferSoal = null;
 let undoTimeoutId = null;
@@ -5384,24 +5364,52 @@ function updateTombolPlatformUI() {
         }
 
       // --- FUNGSI CEK SETUP AWAL SAAT APLIKASI DIBUKA ---
-window.addEventListener('DOMContentLoaded', () => {
-    cekDanValidasiGasUrl();
-});
+window.addEventListener('DOMContentLoaded', async () => { 
+    try {
+        await loadDatabase(); 
+    } catch(e) {
+        console.error("Gagal load database awal:", e);
+    }
 
+    const loader = document.getElementById('app-preloader');
+    if(loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 500);
+    }
+
+    // GEMBOK GANDA: Hanya masuk otomatis JIKA ada riwayat User DAN ada Tautan URL
+    const savedUser = localStorage.getItem('smart_teacher_user');
+    const savedUrl = localStorage.getItem('ST_GAS_URL') || "";
+
+    if (savedUser && savedUrl.startsWith("http")) {
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.style.display = 'none';
+    } else {
+        // Jika salah satu kosong (aplikasi baru/link kosong), paksa cek & hapus memori
+        cekDanValidasiGasUrl();
+    }
+});
 function cekDanValidasiGasUrl() {
     const savedUrl = localStorage.getItem('ST_GAS_URL') || "";
     const loginScreen = document.getElementById('login-screen');
     const setupModal = document.getElementById('setup-db-modal');
 
     if (!savedUrl || !savedUrl.startsWith("http")) {
-        // Jika link belum diisi, sembunyikan layar login utama, munculkan panduan setup
+        // 1. PENGHAPUSAN OTOMATIS: Hapus riwayat login lama jika link kosong!
+        localStorage.removeItem('smart_teacher_user');
+        
+        // 2. Munculkan modal panduan setup
         if (setupModal) setupModal.classList.remove('hidden');
-        if (loginScreen) loginScreen.classList.add('hidden');
+        
+        // 3. JANGAN SEMBUNYIKAN layar login! Biarkan menutupi Dashboard
+        if (loginScreen) {
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex'; 
+        }
     } else {
         if (setupModal) setupModal.classList.add('hidden');
     }
 }
-
 function simpanSetupGasUrl() {
     const inputUrl = document.getElementById('modal-gas-url-input').value.trim();
     if (!inputUrl || !inputUrl.startsWith("http")) {
@@ -5505,6 +5513,43 @@ async function prosesDaftar() {
 }
         
           </script>
+          <!-- MODAL PANDUAN & SETUP DATABASE MANDIRI -->
+<div id="setup-db-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[99999] hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-[2.5rem] p-6 lg:p-8 max-w-xl w-full text-white shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h3 class="text-xl font-black text-white">Setup Database Google Sheets Mandiri</h3>
+            <p class="text-xs text-slate-400 mt-1">Aplikasi ini menggunakan database milik Anda sendiri agar data akun dan siswa aman serta bisa diakses dari perangkat mana pun.</p>
+        </div>
+
+        <!-- Kolom Input Tautan -->
+        <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 mb-6 space-y-3">
+            <label class="block text-xs font-bold text-slate-300">Tempel Tautan Web App Google Apps Script Anda (.exec):</label>
+            <input type="text" id="modal-gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-brand-500">
+            <button onclick="simpanSetupGasUrl()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-black py-3 rounded-xl text-xs shadow-lg transition-all">
+                Simpan & Aktifkan Aplikasi
+            </button>
+        </div>
+
+        <!-- Teks Panduan Ringkas -->
+        <div class="text-left space-y-3 bg-slate-950/50 p-4 rounded-2xl border border-slate-800 text-xs text-slate-300">
+            <p class="font-black text-amber-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-lightbulb mr-1"></i> Belum punya Tautan / Script?</p>
+            <ol class="list-decimal list-inside space-y-2 text-slate-400">
+                <li>Buat file <b class="text-white">Google Sheets baru</b> di Google Drive Anda.</li>
+                <li>Buka menu atas: <b class="text-white">Ekstensi > Apps Script</b>.</li>
+                <li>Hapus kode bawaan, lalu paste kode backend *Smart Teacher* yang sudah disiapkan.</li>
+                <li>Klik <b class="text-white">Terapkan (Deploy) > Kelola penerapan > Aplikasi web</b> (Akses: <i>Siapa saja</i>).</li>
+                <li>Salin tautan berakhiran <b class="text-white">/exec</b>, lalu tempel ke kotak di atas!</li>
+            </ol>
+        </div>
+
+        <button onclick="tutupModalSetup()" class="mt-6 w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold py-2.5 rounded-xl text-xs transition-all">
+            Tutup Sementara
+        </button>
+    </div>
+</div>
    <!-- MODAL KELOLA BANK SOAL -->
 <div id="bank-soal-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[87] hidden flex items-center justify-center p-4 transition-all no-print">
     <div class="bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full p-6 lg:p-8 transform transition-all border border-indigo-500/30 text-white flex flex-col max-h-[90vh]">
