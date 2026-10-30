@@ -5841,57 +5841,19 @@ function hapusRuangKerja(idHapus, event) {
 
 // --- MESIN EDIT RUANG KERJA ---
 function editRuangKerja(idEdit, event) {
-    // 1. Kunci Utama: Cegah klik tembus yang bikin pindah ruang kerja
     event.stopPropagation(); 
 
-    // 2. Cari data sekolah yang mau diedit dari memori
     const index = workspaces.findIndex(ws => ws.id === idEdit);
     
     if (index !== -1) {
         const dataLama = workspaces[index];
-        
-        // 3. Munculkan pop-up minta nama baru (isi default dengan nama lama)
-        const namaBaru = prompt("Edit Nama Instansi/Sekolah:", dataLama.nama);
-        if (namaBaru === null || namaBaru.trim() === "") return; // JikaPertanyaan yang sangat teliti, Bosku! 
-
-Jawabannya: **Untuk "Tombol"-nya sudah komplit ada dua-duanya, tapi untuk "Mesin (Fungsi JavaScript)"-nya baru ada yang hapus.**
-
-Biar lebih jelas, ini rinciannya:
-
-1. **Tombol (HTML):** Sudah ada dua-duanya. Ikon pensil biru (Edit) dan ikon tong sampah merah (Hapus) sudah siap nangkring.
-2. **Mesin Hapus (`hapusRuangKerja`):** **SUDAH ADA**. Tadi sudah saya berikan di atas (yang ada fitur `event.stopPropagation()` dan `workspaces.splice()` itu).
-3. **Mesin Edit (`editRuangKerja`):** **BELUM ADA**. Tadi saya hanya membuatkan tombolnya saja. 
-
-Kalau tombol Edit itu diklik sekarang, aplikasinya tidak akan melakukan apa-apa (atau malah *error* di *console*) karena mesinnya belum Bosku pasang.
-
-Agar tuntas dan tombol Edit-nya berfungsi, Bosku bisa menambahkan mesin (fungsi) ini tepat di bawah fungsi `hapusRuangKerja` yang tadi:
-
-```javascript
-// Mesin untuk tombol Edit Ruang Kerja
-function editRuangKerja(idEdit, event) {
-    event.stopPropagation(); // Wajib! Mencegah terklik pindah ruang kerja
-
-    // Cari data sekolah berdasarkan ID-nya
-    const index = workspaces.findIndex(ws => ws.id === idEdit);
-    
-    if (index !== -1) {
-        const dataLama = workspaces[index];
-        
-        // Memunculkan kotak dialog sederhana untuk mengubah nama instansi
-        // (Bosku bisa menyesuaikan bagian ini jika punya desain form Edit sendiri)
         const namaBaru = prompt("Ubah Nama Instansi:", dataLama.nama);
         
-        // Jika nama diisi dan tidak dibatalkan
         if (namaBaru !== null && namaBaru.trim() !== "") {
-            // Update datanya
             workspaces[index].nama = namaBaru.trim();
-            
-            // Simpan kembali ke penyimpanan lokal browser
-            // Catatan: Sesuaikan 'data_workspaces' dengan nama key penyimpanan Bosku
-            localStorage.setItem('data_workspaces', JSON.stringify(workspaces));
-            
-            // Refresh paksa tampilan daftar
+            localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
             renderListWorkspace();
+            renderLabelWorkspace();
             alert("Nama ruang kerja berhasil diperbarui!");
         }
     }
