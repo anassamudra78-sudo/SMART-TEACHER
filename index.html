@@ -236,6 +236,13 @@
                     </div>
                     <button onclick="toggleMobileMenu(true)" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
+                <!-- TOMBOL GANTI RUANG KERJA KHUSUS LACI HP -->
+            <div class="px-4 pt-6 pb-2">
+                <button onclick="bukaModalWorkspace(); toggleMobileMenu(true);" class="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
+                    <i class="fa-solid fa-building"></i>
+                    <span class="text-sm">Alih Ruang Kerja</span>
+                </button>
+            </div>
                 <div id="mobile-menu-list" class="flex-1 overflow-y-auto px-4 py-6 space-y-1 text-sm custom-scrollbar"></div>
             </div>
 
@@ -5771,30 +5778,40 @@ function renderListWorkspace() {
     listContainer.innerHTML = '';
 
     workspaces.forEach(ws => {
-        const isActive = ws.id === activeWsId;
-        const div = document.createElement('div');
-        div.className = `p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-800/50 border-slate-700 hover:bg-slate-700'}`;
-        div.onclick = () => pindahWorkspace(ws.id);
-        
-     div.innerHTML = `
-                    <div>
-                        <h4 class="text-sm font-bold text-white">${ws.nama}</h4>
-                        <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: ${ws.npsn || '-'} | URL Database: ${ws.url ? 'Tersimpan' : 'Kosong'}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        ${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg mr-1"></i>' : ''}
-                        ${ws.id !== 'utama' ? `
+                const isActive = ws.id === activeWsId;
+                const div = document.createElement('div');
+                
+                div.className = `p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-800/50 border-slate-700 hover:bg-slate-700'}`;
+                
+                // Fungsi klik utama tetap aman
+                div.onclick = () => pindahWorkspace(ws.id);
+
+                // Kita pisahkan tombolnya ke variabel agar tidak pusing mengurus kutip bersarang
+                let tombolAksi = '';
+                if (ws.id !== 'utama') {
+                    tombolAksi = `
                         <button onclick="editRuangKerja('${ws.id}', event)" class="w-8 h-8 rounded-full bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Edit">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </button>
                         <button onclick="hapusRuangKerja('${ws.id}', event)" class="w-8 h-8 rounded-full bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Hapus">
                             <i class="fa-solid fa-trash-can text-sm"></i>
                         </button>
-                        ` : ''}
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div>
+                        <h4 class="text-sm font-bold text-white">${ws.nama}</h4>
+                        <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: ${ws.npsn || '-'} | URL Database: ${ws.url ? 'Tersimpan' : 'Kosong'}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg mr-1"></i>' : ''}
+                        ${tombolAksi}
                     </div>
                 `;
-        listContainer.appendChild(div);
-    });
+                
+                listContainer.appendChild(div);
+            });
 }
 
 // Fungsi Menghapus Ruang Kerja (Aman & Tidak Memicu Pindah Workspace)
