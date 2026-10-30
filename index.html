@@ -5235,9 +5235,10 @@ function updateTombolPlatformUI() {
             if(!siswa) return;
             
            // FORMAT SMART QR: NIS|Nama Siswa|Nama Kelas
-            const kelasSiswa = AppState.db.kelas.find(k => k.id === siswa.kelasId);
-            const namaKelas = kelasSiswa ? kelasSiswa.kode : "-";
-            const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
+           // SOLUSI AMAN: Deteksi apakah kelasId berupa ID atau langsung teks kode kelas (seperti "VII-B")
+const kelasSiswa = AppState.db.kelas.find(k => k.id === siswa.kelasId || k.kode === siswa.kelasId);
+const namaKelas = kelasSiswa ? kelasSiswa.kode : (siswa.kelasId || "-");
+const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetData)}&margin=10`;
 
             const modalHtml = `
