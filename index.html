@@ -180,6 +180,13 @@
                     <p class="text-[10px] text-amber-300 uppercase tracking-widest font-semibold">Integrated Workspace v3.0</p>
                 </div>
             </div>
+            <!-- TOMBOL GANTI RUANG KERJA (VERSI HP/ATAS) -->
+          <div class="px-4 mb-2 mt-2 block md:hidden">
+              <button onclick="bukaModalWorkspace()" class="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">
+                  <i class="fa-solid fa-building"></i>
+                  <span class="text-sm">Alih Ruang Kerja</span>
+              </button>
+          </div>
             <div id="sidebar-menu" class="flex-1 overflow-y-auto px-4 py-4 space-y-1 text-sm custom-scrollbar"></div>
             <div class="mt-auto pt-3 pb-2 border-t border-slate-700/50 text-center">
                 <!-- TOMBOL GANTI RUANG KERJA -->
@@ -5769,15 +5776,43 @@ function renderListWorkspace() {
         div.className = `p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-800/50 border-slate-700 hover:bg-slate-700'}`;
         div.onclick = () => pindahWorkspace(ws.id);
         
-        div.innerHTML = `
-            <div>
-                <h4 class="text-sm font-bold text-white">${ws.nama}</h4>
-                <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: ${ws.npsn || '-'} | URL Database: ${ws.url ? 'Tersimpan' : 'Kosong'}</p>
-            </div>
-            ${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg"></i>' : ''}
-        `;
+      div.innerHTML = `
+                    <div>
+                        <h4 class="text-sm font-bold text-white">\${ws.nama}</h4>
+                        <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: \${ws.npsn || '-'} | URL Database: \${ws.url ? 'Tersimpan' : 'Kosong'}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        \${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg"></i>' : ''}
+                        \${ws.id !== 'utama' ? \`<button onclick="hapusRuangKerja('\${ws.id}', event)" class="w-8 h-8 rounded-full bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Hapus"><i class="fa-solid fa-trash-can text-sm"></i></button>\` : ''}
+                    </div>
+                `;
         listContainer.appendChild(div);
     });
+}
+
+// Fungsi Menghapus Ruang Kerja (Aman & Tidak Memicu Pindah Workspace)
+function hapusRuangKerja(idHapus, event) {
+    // KUNCI UTAMA: Cegah klik tembus ke tombol pindah ruang kerja
+    event.stopPropagation(); 
+
+    if (confirm("Yakin ingin menghapus ruang kerja ini dari memori?")) {
+        // Cari urutan datanya di dalam array
+        const index = workspaces.findIndex(ws => ws.id === idHapus);
+        
+        if (index !== -1) {
+            // Hapus 1 data tersebut dari memori sementara
+            workspaces.splice(index, 1);
+            
+            // Simpan pembaruan ke memori lokal browser (Local Storage)
+            // Catatan: Jika aplikasi Bosku menggunakan nama key penyimpanan yang berbeda, 
+            // silakan sesuaikan 'data_workspaces' di bawah ini dengan nama aslinya.
+            localStorage.setItem('data_workspaces', JSON.stringify(workspaces));
+            
+            // Refresh paksa tampilan pop-up agar daftarnya langsung hilang
+            renderListWorkspace();
+            alert("Ruang kerja berhasil dihapus!");
+        }
+    }
 }
 
 // 5. Eksekusi Pindah Sekolah
