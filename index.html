@@ -182,6 +182,16 @@
             </div>
             <div id="sidebar-menu" class="flex-1 overflow-y-auto px-4 py-4 space-y-1 text-sm custom-scrollbar"></div>
             <div class="mt-auto pt-3 pb-2 border-t border-slate-700/50 text-center">
+                <!-- TOMBOL GANTI RUANG KERJA -->
+            <div class="mb-3 px-4">
+                <button onclick="bukaModalWorkspace()" class="w-full flex items-center justify-between bg-slate-800/80 hover:bg-indigo-600 text-slate-300 hover:text-white text-xs font-bold py-3 px-4 rounded-xl transition-all border border-slate-700 hover:border-indigo-500 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-building text-indigo-400"></i>
+                        <span id="label-ruang-kerja" class="truncate text-left font-black">Ruang Kerja Utama</span>
+                    </div>
+                    <i class="fa-solid fa-arrows-rotate text-[10px] opacity-70"></i>
+                </button>
+            </div>
                 <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">SMART TEACHER v3.0 Integrated Workspace</p>
                 <p class="text-[11px] text-slate-300 font-semibold mt-0.5">Dev: Muh. Nashir, S.Pd.</p>
             </div>
@@ -1649,26 +1659,14 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
                 <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 lg:p-8 max-w-3xl mx-auto">
                     <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-6 border-b dark:border-slate-800 pb-4"><i class="fa-solid fa-shield-halved text-brand-500 mr-2"></i>Pengaturan Sistem</h3>
                     
-                    <!-- KONEKSI SMART GATEWAY (FITUR BARU) -->
-                    <div class="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
-                        <div class="text-3xl text-cyan-500"><i class="fa-solid fa-satellite-dish"></i></div>
-                        <div class="w-full">
-                            <h4 class="font-bold text-cyan-800 dark:text-cyan-300 text-lg">Koneksi Smart Gateway (Absen Gerbang)</h4>
-                            <p class="text-sm text-cyan-700 dark:text-cyan-400 mb-3 mt-1">Masukkan Tautan (URL JSON) dari mesin absen wajah/QR di gerbang sekolah.</p>
-                            <input type="text" id="setting-gateway-url" value="${AppState.config.gatewayUrl}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white dark:bg-slate-900 border border-cyan-300 dark:border-cyan-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-cyan-500 mb-3 dark:text-white">
-                            <button onclick="saveGatewayUrlConfig()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-xl shadow-md text-sm">Simpan Tautan Gateway</button>
-                            ${AppState.config.gatewayUrl ? '<span class="ml-3 text-xs font-bold text-cyan-600 bg-cyan-100 dark:bg-cyan-900 px-3 py-1.5 rounded-lg border border-cyan-200">Tersimpan</span>' : '<span class="ml-3 text-xs font-bold text-rose-500 bg-rose-100 dark:bg-rose-900 px-3 py-1.5 rounded-lg border border-rose-200">Belum Diatur</span>'}
-                        </div>
-                    </div>
 
                     <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
                         <div class="text-3xl text-emerald-500"><i class="fa-solid fa-cloud"></i></div>
                         <div class="w-full">
                             <h4 class="font-bold text-emerald-800 dark:text-emerald-300 text-lg">Sinkronisasi Cloud (Google Sheets)</h4>
                             <p class="text-sm text-emerald-700 dark:text-emerald-400 mb-3 mt-1">Masukkan Web App URL agar data tersimpan secara online.</p>
-                            <input type="text" id="setting-gas-url" value="${AppState.config.gasUrl}" placeholder="https://script.google.com/macros/s/..." class="w-full bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 mb-3 dark:text-white">
-                            <button onclick="saveGasUrlConfig()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-xl shadow-md text-sm">Simpan Tautan</button>
-                            ${AppState.config.gasUrl ? '<span class="ml-3 text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-200">Terhubung</span>' : '<span class="ml-3 text-xs font-bold text-rose-500 bg-rose-100 dark:bg-rose-900 px-3 py-1.5 rounded-lg border border-rose-200">Offline</span>'}
+                           <input type="text" id="setting-gas-url" readonly value="${getActiveWorkspace().url || ''}" placeholder="Belum ada URL Database di Ruang Kerja ini" class="w-full bg-slate-100 dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-xl px-4 py-2.5 text-sm outline-none mb-3 text-slate-500 cursor-not-allowed">
+<p class="text-xs text-slate-500 dark:text-slate-400 italic">*Tautan ini diambil secara otomatis dari pengaturan Ruang Kerja. Untuk mengubahnya, silakan buat/edit Ruang Kerja di menu samping.</p>
                         </div>
                     </div>
 
@@ -5272,28 +5270,48 @@ function updateTombolPlatformUI() {
             </div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
-        // =========================================================
-        // ENGINE SINKRONISASI SMART GATEWAY (IOT)
-        // =========================================================
-        async function tarikDataGateway(kelasId) {
-            if (!AppState.config.gatewayUrl) {
-                return showAlert("Belum Terhubung", "Tautan Smart Gateway kosong! Harap masukkan URL dari gerbang sekolah di menu Pengaturan.", "error");
-            }
-            
-            const btn = document.getElementById('btn-tarik-gateway');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Sedang Menarik Data...';
-            btn.disabled = true;
+        // =========================================================================
+    // ENGINE SINKRONISASI SMART GATEWAY (IOT) - VERSI MULTI WORKSPACE
+    // =========================================================================
+    async function tarikDataGateway(kelasId) {
+        // 1. Ambil data Ruang Kerja yang sedang aktif
+        const activeWs = getActiveWorkspace();
+        const npsn = activeWs.npsn;
 
-            try {
-                // Sedot data dari mesin gerbang (dalam format JSON)
-                const response = await fetch(AppState.config.gatewayUrl);
-                const dataGateway = await response.json();
-                
-                let hitungBerhasil = 0;
-                
-                // Siapkan daftar siswa yang ada di kelas ini
-                const siswaKelas = AppState.db.siswa.filter(s => s.kelasId === kelasId);
+        // Cek apakah NPSN di ruang kerja ini sudah diatur
+        if (!npsn) {
+            return showAlert("NPSN Kosong", "Kode Sekolah / NPSN untuk ruang kerja '" + activeWs.nama + "' belum diatur. Silakan buat/edit ruang kerjanya.", "error");
+        }
+
+        // Dapatkan tanggal hari ini (Format: YYYY-MM-DD)
+        const tgl = new Date();
+        const tglStr = tgl.getFullYear() + "-" + String(tgl.getMonth() + 1).padStart(2, '0') + "-" + String(tgl.getDate()).padStart(2, '0');
+
+        const btn = document.getElementById('btn-tarik-gateway');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Sedang Menarik Data...';
+        btn.disabled = true;
+
+        try {
+            // 2. Bangun URL dengan parameter NPSN dan Tanggal
+            const urlTarik = `${URL_GATEWAY_PUSAT}?npsn=${encodeURIComponent(npsn)}&tanggal=${encodeURIComponent(tglStr)}`;
+            
+            // 3. Sedot data dari mesin gerbang pusat
+            const response = await fetch(urlTarik);
+            const jsonResponse = await response.json();
+
+            // Cek jika server mengembalikan pesan error
+            if (jsonResponse.status !== "sukses") {
+                throw new Error(jsonResponse.pesan || "Gagal mengambil data dari server pusat.");
+            }
+
+            // Ambil array data dari hasil response json
+            const dataGateway = jsonResponse.data; 
+
+            let hitungBerhasil = 0;
+
+            // Siapkan daftar siswa yang ada di kelas ini
+            const siswaKelas = AppState.db.siswa.filter(s => s.kelasId === kelasId);
                 
                 // Cocokkan NIS dari gerbang dengan NIS murid di kelas ini
                 dataGateway.forEach(absenGerbang => {
@@ -5644,6 +5662,159 @@ function doGet(e) {
     </div>
     <button onclick="batalHapusSoalUndo()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3.5 py-1.5 rounded-xl text-xs transition-all shadow-md">BATAL (UNDO)</button>
 </div>
+<!-- MODAL RUANG KERJA (Hidden) -->
+    <div id="modal-workspace" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 w-full max-w-md shadow-2xl relative transform scale-95 transition-transform duration-300" id="modal-workspace-content">
+            <button onclick="tutupModalWorkspace()" class="absolute top-5 right-5 text-slate-500 hover:text-rose-400 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            
+            <h3 class="text-xl font-black text-white mb-1"><i class="fa-solid fa-building text-indigo-400 mr-2"></i>Ganti Ruang Kerja</h3>
+            <p class="text-xs text-slate-400 mb-5">Pilih instansi untuk memuat data sekolah tersebut.</p>
+            
+            <!-- Daftar Ruang Kerja -->
+            <div id="list-workspace" class="space-y-2 mb-4 max-h-60 overflow-y-auto custom-scrollbar pr-1"></div>
 
+            <!-- Tombol Tambah Ruang Kerja -->
+            <button onclick="toggleFormTambahWs()" class="w-full border border-dashed border-slate-600 text-slate-400 hover:text-emerald-400 hover:border-emerald-500 hover:bg-emerald-500/5 font-bold py-3 rounded-xl text-xs transition-all mb-2">
+                <i class="fa-solid fa-plus mr-2"></i>Tambah Ruang Kerja Baru
+            </button>
+
+            <!-- Form Tambah Baru (Awalnya Sembunyi) -->
+            <div id="form-tambah-ws" class="hidden bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 mt-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Instansi</label>
+                    <input type="text" id="ws-nama" placeholder="Contoh: SMPN 1, Les AMSAC" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500 mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tautan Database Sekolah (Google Sheets URL)</label>
+                    <input type="text" id="ws-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500 mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kode Sekolah / NPSN</label>
+                    <input type="text" id="ws-npsn" placeholder="Contoh: SMP01, AMSAC99" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500 mt-1">
+                </div>
+                <button onclick="simpanWorkspaceBaru()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all mt-2 shadow-lg shadow-indigo-600/20">Simpan & Aktifkan</button>
+            </div>
+        </div>
+    </div>
+    <!-- LOGIKA RUANG KERJA (JAVASCRIPT) -->
+<script>
+// 1. Inisialisasi Data Ruang Kerja dari Memori HP/Browser
+let workspaces = JSON.parse(localStorage.getItem('ST_WORKSPACES')) || [];
+let activeWsId = localStorage.getItem('ST_ACTIVE_WS_ID');
+
+// Jika belum ada ruang kerja sama sekali, buat default 1
+if (workspaces.length === 0) {
+    let defaultWs = { id: 'ws_' + Date.now(), nama: 'Ruang Kerja Utama', url: '', npsn: '' };
+    workspaces.push(defaultWs);
+    activeWsId = defaultWs.id;
+    simpanWsKeStorage();
+}
+
+function simpanWsKeStorage() {
+    localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
+    localStorage.setItem('ST_ACTIVE_WS_ID', activeWsId);
+}
+
+function getActiveWorkspace() {
+    return workspaces.find(w => w.id === activeWsId) || workspaces[0];
+}
+
+// 2. Update Tulisan di Tombol Menu Samping
+function renderLabelWorkspace() {
+    const active = getActiveWorkspace();
+    const labelEl = document.getElementById('label-ruang-kerja');
+    if(labelEl) labelEl.innerText = active.nama;
+}
+
+// Jalankan update tulisan saat pertama kali halaman dimuat
+document.addEventListener('DOMContentLoaded', renderLabelWorkspace);
+// Jika aplikasinya single-page dan tidak memicu DOMContentLoaded lagi, kita panggil langsung juga:
+renderLabelWorkspace();
+
+// 3. Logika Buka Tutup Pop-up (Modal)
+function bukaModalWorkspace() {
+    const modal = document.getElementById('modal-workspace');
+    const content = document.getElementById('modal-workspace-content');
+    modal.classList.remove('hidden');
+    // Efek animasi halus
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+    renderListWorkspace();
+}
+
+function tutupModalWorkspace() {
+    const modal = document.getElementById('modal-workspace');
+    const content = document.getElementById('modal-workspace-content');
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+    document.getElementById('form-tambah-ws').classList.add('hidden');
+}
+
+function toggleFormTambahWs() {
+    document.getElementById('form-tambah-ws').classList.toggle('hidden');
+}
+
+// 4. Menampilkan Daftar Sekolah di dalam Pop-up
+function renderListWorkspace() {
+    const listContainer = document.getElementById('list-workspace');
+    listContainer.innerHTML = '';
+
+    workspaces.forEach(ws => {
+        const isActive = ws.id === activeWsId;
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-800/50 border-slate-700 hover:bg-slate-700'}`;
+        div.onclick = () => pindahWorkspace(ws.id);
+        
+        div.innerHTML = `
+            <div>
+                <h4 class="text-sm font-bold text-white">${ws.nama}</h4>
+                <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: ${ws.npsn || '-'} | URL Database: ${ws.url ? 'Tersimpan' : 'Kosong'}</p>
+            </div>
+            ${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg"></i>' : ''}
+        `;
+        listContainer.appendChild(div);
+    });
+}
+
+// 5. Eksekusi Pindah Sekolah
+function pindahWorkspace(id) {
+    if (activeWsId === id) return; // Abaikan jika mengklik sekolah yang sedang aktif
+    
+    activeWsId = id;
+    simpanWsKeStorage();
+    
+    // Refresh (muat ulang) halaman agar sistem menarik data dari awal sesuai sekolah yang dipilih
+    window.location.reload(); 
+}
+
+// 6. Eksekusi Simpan Sekolah Baru
+function simpanWorkspaceBaru() {
+    const nama = document.getElementById('ws-nama').value.trim();
+    const url = document.getElementById('ws-url').value.trim();
+    const npsn = document.getElementById('ws-npsn').value.trim();
+    
+    if (!nama) return alert("Nama instansi wajib diisi, Bosku!");
+
+    const newWs = {
+        id: 'ws_' + Date.now(),
+        nama: nama,
+        url: url,
+        npsn: npsn
+    };
+    
+    workspaces.push(newWs);
+    activeWsId = newWs.id; // Langsung aktifkan sekolah yang baru dibuat
+    simpanWsKeStorage();
+    
+    window.location.reload();
+}
+// =========================================================================
+// KONFIGURASI SERVER PUSAT GATEWAY (DITANAM / HARDCODE)
+// =========================================================================
+const URL_GATEWAY_PUSAT = "https://script.google.com/macros/s/AKfycbzcHLMR_oS83RcSUucJ5PWEkD7MxIAkNf_vQ-tDOHaUeJ-AelGf0KmPZTCW9EGyEHxJ/exec";
+</script>
 </body>
 </html>
