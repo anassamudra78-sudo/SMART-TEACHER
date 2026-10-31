@@ -5362,16 +5362,13 @@ const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
     // ENGINE SINKRONISASI SMART GATEWAY (IOT) - VERSI MULTI WORKSPACE
     // =========================================================================
     async function tarikDataGateway(kelasId) {
-        // 1. Ambil data Ruang Kerja yang sedang aktif
         const activeWs = getActiveWorkspace();
         const npsn = activeWs.npsn;
 
-        // Cek apakah NPSN di ruang kerja ini sudah diatur
         if (!npsn) {
             return showAlert("NPSN Kosong", "Kode Sekolah / NPSN untuk ruang kerja '" + activeWs.nama + "' belum diatur. Silakan buat/edit ruang kerjanya.", "error");
         }
 
-        // Dapatkan tanggal hari ini (Format: YYYY-MM-DD)
         const tgl = new Date();
         const tglStr = tgl.getFullYear() + "-" + String(tgl.getMonth() + 1).padStart(2, '0') + "-" + String(tgl.getDate()).padStart(2, '0');
 
@@ -5381,77 +5378,76 @@ const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
         btn.disabled = true;
 
         try {
-            // 2. Bangun URL dengan parameter NPSN dan Tanggal
-            const urlTarik = `${URL_GATEWAY_PUSAT}?npsn=${encodeURIComponent(npsn)}&tanggal=${encodeURIComponent(tglStr)}`;
+            // PERBAIKAN 1: Menambahkan action=getLogs ke dalam URL
+            const urlTarik = `${URL_GATEWAY_PUSAT}?action=getLogs&npsn=${encodeURIComponent(npsn)}&tanggal=${encodeURIComponent(tglStr)}`;
             
-            // 3. Sedot data dari mesin gerbang pusat
             const response = await fetch(urlTarik);
-            const jsonResponse = await response.json();
+            
+            // PERBAIKAN 2: Baca sebagai teks dulu agar tidak langsung crash
+            const textResponse = await response.text(); 
+            
+            let jsonResponse;
+            try {
+                jsonResponse = JSON.parse(textResponse);
+            } catch (err) {
+                // Jika gagal jadi JSON, tampilkan teks aslinya agar ketahuan salahnya di mana
+                throw new Error("Server membalas dengan format salah: " + textResponse.substring(0, 50) + "...");
+            }
 
-            // Cek jika server mengembalikan pesan error
             if (jsonResponse.status !== "sukses") {
                 throw new Error(jsonResponse.pesan || "Gagal mengambil data dari server pusat.");
             }
 
-            // Ambil array data dari hasil response json
-            const dataGateway = jsonResponse.data; 
-
+            const dataGateway = jsonResponse.data || []; 
             let hitungBerhasil = 0;
-
-            // Siapkan daftar siswa yang ada di kelas ini
             const siswaKelas = AppState.db.siswa.filter(s => s.kelasId === kelasId);
                 
-                // Cocokkan NIS dari gerbang dengan NIS murid di kelas ini
-                dataGateway.forEach(absenGerbang => {
-                    // Gateway harus mengirimkan setidaknya { nis: "1001", tanggal: "2026-10-28" }
-                    if (absenGerbang.nis && absenGerbang.tanggal) {
-                        const siswaMatch = siswaKelas.find(s => String(s.nis) === String(absenGerbang.nis));
+            dataGateway.forEach(absenGerbang => {
+                if (absenGerbang.nis && absenGerbang.tanggal) {
+                    const siswaMatch = siswaKelas.find(s => String(s.nis) === String(absenGerbang.nis));
+                    
+                    if (siswaMatch) {
+                        const idx = AppState.db.absensi.findIndex(a => 
+                            a.siswaId === siswaMatch.id && 
+                            a.tanggal === absenGerbang.tanggal && 
+                            a.kelasId === kelasId
+                        );
                         
-                        if (siswaMatch) {
-                            // Cek apakah di Smart Teacher siswa ini sudah diabsen pada tanggal tersebut
-                            const idx = AppState.db.absensi.findIndex(a => 
-                                a.siswaId === siswaMatch.id && 
-                                a.tanggal === absenGerbang.tanggal && 
-                                a.kelasId === kelasId
-                            );
-                            
-                            if (idx >= 0) {
-                                // Jika sudah ada tapi belum 'H', timpa jadi Hadir (H)
-                                if (AppState.db.absensi[idx].status !== 'H') {
-                                    AppState.db.absensi[idx].status = 'H';
-                                    hitungBerhasil++;
-                                }
-                            } else {
-                                // Jika belum diabsen sama sekali, catat sebagai Hadir (H)
-                                AppState.db.absensi.push({
-                                    id: generateId(),
-                                    siswaId: siswaMatch.id,
-                                    kelasId: kelasId,
-                                    tanggal: absenGerbang.tanggal,
-                                    status: 'H'
-                                });
+                        if (idx >= 0) {
+                            if (AppState.db.absensi[idx].status !== 'H') {
+                                AppState.db.absensi[idx].status = 'H';
                                 hitungBerhasil++;
                             }
+                        } else {
+                            AppState.db.absensi.push({
+                                id: generateId(),
+                                siswaId: siswaMatch.id,
+                                kelasId: kelasId,
+                                tanggal: absenGerbang.tanggal,
+                                status: 'H'
+                            });
+                            hitungBerhasil++;
                         }
                     }
-                });
-                
-                if (hitungBerhasil > 0) {
-                    saveDatabase(); // Simpan diam-diam
-                    showAlert("Sinkronisasi Sukses!", `Berhasil menarik dan mencentang Hadir (H) untuk ${hitungBerhasil} siswa dari Smart Gateway!`, "success");
-                } else {
-                    showAlert("Selesai", "Semua data sudah sinkron. Tidak ada kehadiran baru dari mesin gerbang untuk kelas ini.", "info");
                 }
+            });
                 
-            } catch (err) {
-                console.error(err);
-                showAlert("Koneksi Gagal", "Pesan Sistem: " + err.message, "error");
-        } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
+            if (hitungBerhasil > 0) {
+                saveDatabase(); 
+                showAlert("Sinkronisasi Sukses!", `Berhasil menarik dan mencentang Hadir (H) untuk ${hitungBerhasil} siswa dari Smart Gateway!`, "success");
+            } else {
+                showAlert("Selesai", "Semua data sudah sinkron. Tidak ada kehadiran baru dari mesin gerbang untuk kelas ini.", "info");
             }
+                
+        } catch (err) {
+            console.error(err);
+            showAlert("Koneksi Gagal", err.message, "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            loadAbsensi(); 
         }
+    }
     // =========================================================
         // SISTEM AUTENTIKASI GOOGLE SHEETS (ONLINE & TANPA FIREWALL)
         // =========================================================
