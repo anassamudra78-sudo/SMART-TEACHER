@@ -760,11 +760,9 @@ document.addEventListener('click', function unlockAudioMode() {
             const aktifId = localStorage.getItem('ST_ACTIVE_WS_ID');
             
             if (listWs.length > 0) {
-                // Jika yang dibuka sekolah PERTAMA (SMK Kemayoran), pakai brankas lama agar data utuhnya aman
                 if (aktifId === listWs[0].id) {
                     AppState.config.storageKey = 'SmartTeacher_DB';
                 } else {
-                    // Jika sekolah KEDUA dst, buat brankas baru khusus sekolah itu!
                     AppState.config.storageKey = 'SmartTeacher_DB_' + aktifId;
                 }
             }
@@ -777,20 +775,23 @@ document.addEventListener('click', function unlockAudioMode() {
                 AppState.db = {
                     sekolah: { nama: dataSekolahAktif.nama || '', npsn: dataSekolahAktif.npsn || '', alamat: '', kepsek: '', nip: '', tahunAjaran: '2026/2027', semester: 'Ganjil' },
                     guru: [], siswa: [], kelas: [], mapel: [], jadwal: [], jurnal: [], penilaian: [], absensi: [], pengaturan: { apiKey: '' },
-                    mispersepsiSoal: {} 
+                    mispersepsiSoal: {},
+                    bankSoal: [] // <--- TAMBAHAN: BANK SOAL DIKOSONGKAN UNTUK SEKOLAH BARU
                 };
             }
 
-            // --- 2. BACA DATA NORMAL ---
+            // --- 2. BACA DATA NORMAL (DARI HP) ---
             if (localData) {
                 try { 
                     AppState.db = { ...AppState.db, ...JSON.parse(localData) }; 
                     if (!AppState.db.jadwal) AppState.db.jadwal = [];
                     if (!AppState.db.mispersepsiSoal) AppState.db.mispersepsiSoal = {};
+                    if (!AppState.db.bankSoal) AppState.db.bankSoal = []; // Pastikan ada
                 } 
                 catch(e) { console.error("Error parsing local data", e); }
             }
 
+            // --- 3. SINKRONISASI DARI CLOUD GOOGLE SHEETS ---
             if (AppState.config.gasUrl && AppState.config.gasUrl.startsWith("http")) {
                 try {
                     const response = await fetch(AppState.config.gasUrl);
@@ -800,11 +801,26 @@ document.addEventListener('click', function unlockAudioMode() {
                         if (cloudData && cloudData.sekolah) {
                             AppState.db = { ...AppState.db, ...cloudData };
                             if (!AppState.db.jadwal) AppState.db.jadwal = [];
+                            if (!AppState.db.bankSoal) AppState.db.bankSoal = [];
                             localStorage.setItem(AppState.config.storageKey, JSON.stringify(AppState.db));
                         }
                     }
                 } catch (e) { console.error("Gagal sinkronisasi dari Cloud.", e); }
             }
+
+            // --- 4. PENYELAMATAN BANK SOAL LAMA ---
+            // Memindahkan bank soal lama (kalau ada) agar masuk ke dalam Database Utama
+            let legacySoal = JSON.parse(localStorage.getItem('smartTeacher_bankSoal') || '[]');
+            if (legacySoal.length > 0 && (!AppState.db.bankSoal || AppState.db.bankSoal.length === 0)) {
+                AppState.db.bankSoal = legacySoal;
+                localStorage.removeItem('smartTeacher_bankSoal'); // Bersihkan sisa memori lama
+                localStorage.setItem(AppState.config.storageKey, JSON.stringify(AppState.db));
+            }
+            
+            // Arahkan kuis agar membaca langsung dari Database Utama
+            if (!AppState.db.bankSoal) AppState.db.bankSoal = [];
+            AppState.kuis.bankSoalManual = AppState.db.bankSoal;
+            
             updateUI();
         }
 
@@ -2743,8 +2759,11 @@ function restoreJSON() {
             bukaArenaKuis(soalPilihan, true);
         }
 
-        function simpanKeLocalStorage() {
-            localStorage.setItem('smartTeacher_bankSoal', JSON.stringify(AppState.kuis.bankSoalManual));
+       function simpanKeLocalStorage() {
+            // Karena Bank Soal sekarang sudah jadi 1 nyawa dengan Database Utama,
+            // kita cukup panggil saveDatabase() agar terkirim juga ke Google Sheets (Cloud)!
+            saveDatabase();
+            
             const countEl = document.getElementById('man-count');
             const infoTotal = document.getElementById('total-bank-info');
             if (countEl) countEl.innerText = AppState.kuis.bankSoalManual.length;
@@ -2752,11 +2771,17 @@ function restoreJSON() {
         }
 
         function kosongkanBankSoal() {
-            if (confirm('Yakin ingin menghapus semua soal dari memori perangkat?')) {
-                AppState.kuis.bankSoalManual = [];
-                localStorage.removeItem('smartTeacher_bankSoal');
-                simpanKeLocalStorage();
-                showAlert('Berhasil', 'Bank soal telah dikosongkan!', 'success');
+            if (confirm('Yakin ingin menghapus semua soal dari memori perangkat dan Cloud?')) {
+                // Kosongkan dari Database Utama
+                AppState.db.bankSoal = [];
+                AppState.kuis.bankSoalManual = AppState.db.bankSoal; // Singkronkan
+                
+                simpanKeLocalStorage(); // Simpan dan kirim ke Cloud
+                
+                // Jika menu pop-up soal sedang terbuka, paksa hapus tampilannya juga
+                if (typeof renderDaftarSoalModal === 'function') renderDaftarSoalModal();
+                
+                showAlert('Berhasil', 'Bank soal telah dikosongkan dari HP dan Cloud!', 'success');
             }
         }
 
