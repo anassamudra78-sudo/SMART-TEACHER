@@ -5773,35 +5773,90 @@ let editWsIdTerpilih = null;
 
 function toggleFormTambahWs() {
     document.getElementById('form-tambah-ws').classList.toggle('hidden');
-    // Kosongkan form dan kembalikan ke mode "Tambah Baru" murni
     document.getElementById('ws-nama').value = '';
     document.getElementById('ws-url').value = '';
     document.getElementById('ws-npsn').value = '';
     editWsIdTerpilih = null; 
 }
 
-// --- MESIN EDIT RUANG KERJA (FULL UPDATE) ---
+// 4. Menampilkan Daftar Sekolah di dalam Pop-up (YANG TADI TIDAK SENGAJA TERHAPUS)
+function renderListWorkspace() {
+    const listContainer = document.getElementById('list-workspace');
+    listContainer.innerHTML = '';
+
+    workspaces.forEach(ws => {
+        const isActive = ws.id === activeWsId;
+        const div = document.createElement('div');
+        
+        div.className = `p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${isActive ? 'bg-indigo-600/20 border-indigo-500' : 'bg-slate-800/50 border-slate-700 hover:bg-slate-700'}`;
+        
+        div.onclick = () => pindahWorkspace(ws.id);
+
+        let tombolAksi = '';
+        if (ws.id !== 'utama') {
+            tombolAksi = `
+                <button onclick="editRuangKerja('${ws.id}', event)" class="w-8 h-8 rounded-full bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Edit">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+                <button onclick="hapusRuangKerja('${ws.id}', event)" class="w-8 h-8 rounded-full bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors shadow-sm" title="Hapus">
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
+            `;
+        }
+
+        div.innerHTML = `
+            <div>
+                <h4 class="text-sm font-bold text-white">${ws.nama}</h4>
+                <p class="text-[10px] text-slate-400 font-mono mt-0.5">NPSN: ${ws.npsn || '-'} | URL Database: ${ws.url ? 'Tersimpan' : 'Kosong'}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                ${isActive ? '<i class="fa-solid fa-circle-check text-indigo-400 text-lg mr-1"></i>' : ''}
+                ${tombolAksi}
+            </div>
+        `;
+        listContainer.appendChild(div);
+    });
+}
+
+// Mesin Hapus Ruang Kerja
+function hapusRuangKerja(idHapus, event) {
+    event.stopPropagation(); 
+    if (confirm("Yakin ingin menghapus ruang kerja ini dari memori?")) {
+        const index = workspaces.findIndex(ws => ws.id === idHapus);
+        if (index !== -1) {
+            workspaces.splice(index, 1);
+            localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
+            renderListWorkspace();
+            alert("Ruang kerja berhasil dihapus!");
+        }
+    }
+}
+
+// --- MESIN EDIT RUANG KERJA (FULL UPDATE TERBARU) ---
 function editRuangKerja(idEdit, event) {
-    event.stopPropagation(); // Mencegah klik memicu pindah sekolah
+    event.stopPropagation(); 
 
     const index = workspaces.findIndex(ws => ws.id === idEdit);
     if (index !== -1) {
         const dataLama = workspaces[index];
         
-        // 1. Buka form "Tambah Ruang Kerja" milik Bosku
         document.getElementById('form-tambah-ws').classList.remove('hidden');
-        
-        // 2. Isi otomatis kolomnya dengan data lama agar siap diedit
         document.getElementById('ws-nama').value = dataLama.nama || '';
         document.getElementById('ws-url').value = dataLama.url || '';
         document.getElementById('ws-npsn').value = dataLama.npsn || '';
         
-        // 3. Kunci ID ini agar saat tombol "Simpan" ditekan, mesin tahu ini adalah proses Update
         editWsIdTerpilih = idEdit;
-        
-        // Scroll sedikit ke bawah biar form-nya kelihatan jelas (opsional)
         document.getElementById('form-tambah-ws').scrollIntoView({ behavior: 'smooth' });
     }
+}
+
+// 5. Eksekusi Pindah Sekolah (YANG TADI JUGA TERHAPUS)
+function pindahWorkspace(id) {
+    if (activeWsId === id) return; 
+    
+    activeWsId = id;
+    simpanWsKeStorage();
+    window.location.reload(); 
 }
 
 // 6. Eksekusi Simpan Sekolah Baru / Update Sekolah Lama
@@ -5813,17 +5868,15 @@ function simpanWorkspaceBaru() {
     if (!nama) return alert("Nama instansi wajib diisi, Bosku!");
 
     if (editWsIdTerpilih) {
-        // --- JIKA MODE EDIT AKTIF: Update data yang sudah ada ---
         const index = workspaces.findIndex(ws => ws.id === editWsIdTerpilih);
         if (index !== -1) {
             workspaces[index].nama = nama;
             workspaces[index].url = url;
             workspaces[index].npsn = npsn;
         }
-        editWsIdTerpilih = null; // Bersihkan status edit setelah selesai
+        editWsIdTerpilih = null; 
         alert("Data Ruang Kerja berhasil diperbarui!");
     } else {
-        // --- JIKA MODE TAMBAH AKTIF: Buat data baru ---
         const newWs = {
             id: 'ws_' + Date.now(),
             nama: nama,
@@ -5831,7 +5884,7 @@ function simpanWorkspaceBaru() {
             npsn: npsn
         };
         workspaces.push(newWs);
-        activeWsId = newWs.id; // Langsung aktifkan sekolah yang baru dibuat
+        activeWsId = newWs.id; 
         alert("Ruang Kerja baru berhasil ditambahkan!");
     }
     
@@ -5839,82 +5892,6 @@ function simpanWorkspaceBaru() {
     window.location.reload();
 }
 
-// Fungsi Menghapus Ruang Kerja (Aman & Tidak Memicu Pindah Workspace)
-function hapusRuangKerja(idHapus, event) {
-    // KUNCI UTAMA: Cegah klik tembus ke tombol pindah ruang kerja
-    event.stopPropagation(); 
-
-    if (confirm("Yakin ingin menghapus ruang kerja ini dari memori?")) {
-        // Cari urutan datanya di dalam array
-        const index = workspaces.findIndex(ws => ws.id === idHapus);
-        
-        if (index !== -1) {
-            // Hapus 1 data tersebut dari memori sementara
-            workspaces.splice(index, 1);
-            
-            // Simpan pembaruan ke memori lokal browser (Local Storage)
-            // Catatan: Jika aplikasi Bosku menggunakan nama key penyimpanan yang berbeda, 
-            // silakan sesuaikan 'data_workspaces' di bawah ini dengan nama aslinya.
-            localStorage.setItem('data_workspaces', JSON.stringify(workspaces));
-            
-            // Refresh paksa tampilan pop-up agar daftarnya langsung hilang
-            renderListWorkspace();
-            alert("Ruang kerja berhasil dihapus!");
-        }
-    }
-}
-
-// --- MESIN EDIT RUANG KERJA ---
-function editRuangKerja(idEdit, event) {
-    event.stopPropagation(); 
-
-    const index = workspaces.findIndex(ws => ws.id === idEdit);
-    
-    if (index !== -1) {
-        const dataLama = workspaces[index];
-        const namaBaru = prompt("Ubah Nama Instansi:", dataLama.nama);
-        
-        if (namaBaru !== null && namaBaru.trim() !== "") {
-            workspaces[index].nama = namaBaru.trim();
-            localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
-            renderListWorkspace();
-            renderLabelWorkspace();
-            alert("Nama ruang kerja berhasil diperbarui!");
-        }
-    }
-}
-// 5. Eksekusi Pindah Sekolah
-function pindahWorkspace(id) {
-    if (activeWsId === id) return; // Abaikan jika mengklik sekolah yang sedang aktif
-    
-    activeWsId = id;
-    simpanWsKeStorage();
-    
-    // Refresh (muat ulang) halaman agar sistem menarik data dari awal sesuai sekolah yang dipilih
-    window.location.reload(); 
-}
-
-// 6. Eksekusi Simpan Sekolah Baru
-function simpanWorkspaceBaru() {
-    const nama = document.getElementById('ws-nama').value.trim();
-    const url = document.getElementById('ws-url').value.trim();
-    const npsn = document.getElementById('ws-npsn').value.trim();
-    
-    if (!nama) return alert("Nama instansi wajib diisi, Bosku!");
-
-    const newWs = {
-        id: 'ws_' + Date.now(),
-        nama: nama,
-        url: url,
-        npsn: npsn
-    };
-    
-    workspaces.push(newWs);
-    activeWsId = newWs.id; // Langsung aktifkan sekolah yang baru dibuat
-    simpanWsKeStorage();
-    
-    window.location.reload();
-}
 // =========================================================================
 // KONFIGURASI SERVER PUSAT GATEWAY (DITANAM / HARDCODE)
 // =========================================================================
