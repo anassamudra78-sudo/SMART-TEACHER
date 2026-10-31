@@ -1666,8 +1666,16 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
 
         function exportExcel(type) {
             const config = crudConfig[type];
-            const data = AppState.db[type] || [];
-            if(data.length === 0) return showAlert("Info", "Tidak ada data untuk diekspor.", "info");
+            let data = AppState.db[type] || [];
+
+            // --- SENSOR FILTER KHUSUS DATA SISWA ---
+            // Jika sedang buka Data Siswa dan ada filter kelas yang dipilih, saring datanya dulu!
+            if (type === 'siswa' && AppState.ui.filterKelasSiswa) {
+                data = data.filter(item => item.kelasId === AppState.ui.filterKelasSiswa);
+            }
+            // ---------------------------------------
+
+            if(data.length === 0) return showAlert("Info", "Tidak ada data untuk diekspor pada filter ini.", "info");
 
             // 1. Susun Judul Kolom (Header)
             let headers = ['No', ...config.fields.map(f => f.label)];
@@ -1681,7 +1689,7 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
                         let ref = AppState.db[f.source].find(r => r.id === val);
                         val = ref ? ref[f.displayField] : val;
                     }
-                    // Bersihkan tag HTML jika ada (seperti '<span...>') agar Excel bersih
+                    // Bersihkan tag HTML jika ada agar Excel bersih
                     if (typeof val === 'string') {
                         val = val.replace(/<[^>]*>?/gm, '');
                     }
@@ -1696,18 +1704,31 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
             // 4. Proses menjadi format Excel (.xlsx) menggunakan SheetJS
             const worksheet = XLSX.utils.aoa_to_sheet(dataToExport);
             
-            // (Opsional) Atur lebar kolom otomatis agar rapi saat dibuka
-            const wscols = [{wch: 5}]; // Lebar kolom 'No'
-            config.fields.forEach(() => wscols.push({wch: 25})); // Lebar kolom data
+            // Atur lebar kolom otomatis
+            const wscols = [{wch: 5}]; 
+            config.fields.forEach(() => wscols.push({wch: 25})); 
             worksheet['!cols'] = wscols;
 
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, `Data_${config.title}`);
-
-            // 5. Download File
-            XLSX.writeFile(workbook, `Data_${config.title}_SmartTeacher.xlsx`);
             
-            showAlert("Berhasil", `File Excel Data ${config.title} berhasil diunduh!`, "success");
+            // --- PENAMAAN FILE OTOMATIS CERDAS ---
+            let namaSheet = `Data_${config.title}`;
+            let namaFile = `Data_${config.title}_SmartTeacher.xlsx`;
+            
+            // Jika yang diekspor siswa kelas tertentu, ubah nama filenya!
+            if (type === 'siswa' && AppState.ui.filterKelasSiswa) {
+                const refKelas = AppState.db.kelas.find(k => k.id === AppState.ui.filterKelasSiswa);
+                if (refKelas) {
+                    // Pastikan nama sheet tidak lebih dari 31 karakter (aturan wajib Excel)
+                    namaSheet = `Siswa_Kelas_${refKelas.kode}`.substring(0, 31);
+                    namaFile = `Data_Siswa_Kelas_${refKelas.kode}_SmartTeacher.xlsx`;
+                }
+            }
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, namaSheet);
+            XLSX.writeFile(workbook, namaFile);
+            
+            showAlert("Berhasil", `File Excel ${namaSheet} berhasil diunduh!`, "success");
         }
 
         function renderPengaturan(container) {
