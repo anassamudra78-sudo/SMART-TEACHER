@@ -1072,7 +1072,7 @@ if (!isActive) {
             reader.readAsArrayBuffer(file);
         }
 
-       function processImport() {
+     function processImport() {
             const type = document.getElementById('import-type-hidden').value;
             const config = crudConfig[type];
             if (!AppState.db[type]) AppState.db[type] = [];
@@ -1093,7 +1093,8 @@ if (!isActive) {
                     let isValid = false;
 
                     config.fields.forEach((f, index) => {
-                        let val = cols[index] !== undefined && cols[index] !== null ? String(cols[index]).trim() : '';
+                        // PERBAIKAN FATAL: Pakai index + 1 untuk melompati kolom "No" di Excel
+                        let val = cols[index + 1] !== undefined && cols[index + 1] !== null ? String(cols[index + 1]).trim() : '';
                         if (val !== '') isValid = true;
 
                         if (f.type === 'dynamicSelect' && val !== '') {
@@ -1125,7 +1126,8 @@ if (!isActive) {
                         let isValid = false;
 
                         config.fields.forEach((f, index) => {
-                            let val = cols[index] ? cols[index].trim().replace(/^"|"$/g, '') : '';
+                            // PERBAIKAN FATAL: Pakai index + 1 untuk melompati kolom "No" di teks Paste
+                            let val = cols[index + 1] ? cols[index + 1].trim().replace(/^"|"$/g, '') : '';
                             if (val !== '') isValid = true;
                             if (f.type === 'dynamicSelect' && val !== '') {
                                 let ref = (AppState.db[f.source] || []).find(r => 
