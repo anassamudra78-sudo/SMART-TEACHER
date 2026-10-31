@@ -754,8 +754,34 @@ document.addEventListener('click', function unlockAudioMode() {
 
         const menuItems = menuGroups.flatMap(g => g.items);
 
-        async function loadDatabase() {
+       async function loadDatabase() {
+            // --- 1. TEMBOK ISOLASI MEMORI LOKAL ---
+            const listWs = JSON.parse(localStorage.getItem('ST_WORKSPACES')) || [];
+            const aktifId = localStorage.getItem('ST_ACTIVE_WS_ID');
+            
+            if (listWs.length > 0) {
+                // Jika yang dibuka sekolah PERTAMA (SMK Kemayoran), pakai brankas lama agar data utuhnya aman
+                if (aktifId === listWs[0].id) {
+                    AppState.config.storageKey = 'SmartTeacher_DB';
+                } else {
+                    // Jika sekolah KEDUA dst, buat brankas baru khusus sekolah itu!
+                    AppState.config.storageKey = 'SmartTeacher_DB_' + aktifId;
+                }
+            }
+
             const localData = localStorage.getItem(AppState.config.storageKey);
+            
+            // Jika sekolah baru dan brankasnya masih kosong, PAKSA SEMUA DATA JADI NOL!
+            if (!localData && aktifId !== listWs[0].id) {
+                const dataSekolahAktif = listWs.find(w => w.id === aktifId) || {};
+                AppState.db = {
+                    sekolah: { nama: dataSekolahAktif.nama || '', npsn: dataSekolahAktif.npsn || '', alamat: '', kepsek: '', nip: '', tahunAjaran: '2026/2027', semester: 'Ganjil' },
+                    guru: [], siswa: [], kelas: [], mapel: [], jadwal: [], jurnal: [], penilaian: [], absensi: [], pengaturan: { apiKey: '' },
+                    mispersepsiSoal: {} 
+                };
+            }
+
+            // --- 2. BACA DATA NORMAL ---
             if (localData) {
                 try { 
                     AppState.db = { ...AppState.db, ...JSON.parse(localData) }; 
