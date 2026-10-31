@@ -1072,7 +1072,7 @@ if (!isActive) {
             reader.readAsArrayBuffer(file);
         }
 
-        function processImport() {
+       function processImport() {
             const type = document.getElementById('import-type-hidden').value;
             const config = crudConfig[type];
             if (!AppState.db[type]) AppState.db[type] = [];
@@ -1098,7 +1098,7 @@ if (!isActive) {
 
                         if (f.type === 'dynamicSelect' && val !== '') {
                             let ref = (AppState.db[f.source] || []).find(r => 
-                                String(r[f.displayField]).toLowerCase() === val.toLowerCase()
+                                String(r[f.displayField]).trim().toLowerCase() === val.toLowerCase()
                             );
                             newItem[f.id] = ref ? ref.id : val;
                         } else {
@@ -1129,7 +1129,7 @@ if (!isActive) {
                             if (val !== '') isValid = true;
                             if (f.type === 'dynamicSelect' && val !== '') {
                                 let ref = (AppState.db[f.source] || []).find(r => 
-                                    String(r[f.displayField]).toLowerCase() === val.toLowerCase()
+                                    String(r[f.displayField]).trim().toLowerCase() === val.toLowerCase()
                                 );
                                 newItem[f.id] = ref ? ref.id : val;
                             } else {
@@ -1154,7 +1154,6 @@ if (!isActive) {
                 showAlert("Gagal", "Tidak ada baris data valid yang dapat diimpor.", "error");
             }
         }
-
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
         // FUNGSI KEAMANAN: Mencegah injeksi kode jahat (XSS) dari input pengguna/Excel
 function escapeHTML(str) {
