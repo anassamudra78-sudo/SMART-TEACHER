@@ -5445,8 +5445,8 @@ const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
                 
             } catch (err) {
                 console.error(err);
-                showAlert("Koneksi Gagal", "Gagal menyedot data dari Smart Gateway. Pastikan tautan di Pengaturan benar dan internet stabil.", "error");
-            } finally {
+                showAlert("Koneksi Gagal", "Pesan Sistem: " + err.message, "error");
+        } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 loadAbsensi(); // Tampilkan ulang tabel 31 Hari yang sudah ter-update
