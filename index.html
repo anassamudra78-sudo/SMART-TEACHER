@@ -5850,9 +5850,16 @@ function editRuangKerja(idEdit, event) {
     }
 }
 
-// 5. Eksekusi Pindah Sekolah (YANG TADI JUGA TERHAPUS)
+// 5. Eksekusi Pindah Sekolah (SUDAH DILENGKAPI PENUKAR LINK CLOUD)
 function pindahWorkspace(id) {
     if (activeWsId === id) return; 
+    
+    // Cari data ruang kerja tujuan
+    const targetWs = workspaces.find(w => w.id === id);
+    if (targetWs) {
+        // KUNCI PENTING: Ganti tautan URL Cloud ke sekolah baru SEBELUM refresh layar!
+        localStorage.setItem('ST_GAS_URL', targetWs.url || "");
+    }
     
     activeWsId = id;
     simpanWsKeStorage();
@@ -5873,6 +5880,11 @@ function simpanWorkspaceBaru() {
             workspaces[index].nama = nama;
             workspaces[index].url = url;
             workspaces[index].npsn = npsn;
+            
+            // Jika yang diedit kebetulan adalah sekolah yang sedang aktif dibuka, update link-nya juga
+            if (editWsIdTerpilih === activeWsId) {
+                localStorage.setItem('ST_GAS_URL', url || "");
+            }
         }
         editWsIdTerpilih = null; 
         alert("Data Ruang Kerja berhasil diperbarui!");
@@ -5885,6 +5897,9 @@ function simpanWorkspaceBaru() {
         };
         workspaces.push(newWs);
         activeWsId = newWs.id; 
+        
+        // KUNCI PENTING: Saat sekolah baru dibuat, pastikan link-nya juga langsung diganti
+        localStorage.setItem('ST_GAS_URL', url || "");
         alert("Ruang Kerja baru berhasil ditambahkan!");
     }
     
