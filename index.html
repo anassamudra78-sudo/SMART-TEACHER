@@ -1419,12 +1419,12 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
                 const currentFilter = AppState.ui.filterKelasSiswa || '';
                 const opsiKelas = AppState.db.kelas.map(k => `<option value="${k.id}" ${currentFilter === k.id ? 'selected' : ''}>${k.kode}</option>`).join('');
                 
-                filterDropdownHtml = `
-                    <select onchange="AppState.ui.filterKelasSiswa = this.value; renderCRUD(document.getElementById('main-content'), '${type}')" class="flex-1 sm:flex-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Semua Kelas --</option>
-                        ${opsiKelas}
-                    </select>
-                `;
+               filterDropdownHtml = `
+    <select onchange="AppState.ui.filterKelasSiswa = this.value; renderCRUD(document.getElementById('main-content'), '${type}')" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold py-2 px-3 rounded-xl text-xs shadow-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500 max-w-[130px] truncate shrink-0">
+        <option value="">-- Semua Kelas --</option>
+        ${opsiKelas}
+    </select>
+`;
                 
                 // Saring data siswa jika ada kelas yang dipilih
                 if (currentFilter) {
