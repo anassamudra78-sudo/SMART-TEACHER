@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMART TEACHER - Integrated Workspace v3.0</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10b981">
     <!-- Ikon Khusus Aplikasi Pusat (Putih-Hijau) -->
     <link rel="icon" type="image/png" sizes="192x192" href="logo-pusat.png">
     <link rel="apple-touch-icon" href="logo-pusat.png">
@@ -651,22 +649,13 @@
         }
 
         // Unlocking Audio Policy Browser
-document.addEventListener('click', function unlockAudioMode() {
-    Object.values(AppState.audio.elements).forEach(audio => {
-        audio.muted = true; // KUNCI PERBAIKAN: Bisukan suara sebelum diputar
-        let playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(_ => {
-                audio.pause();
-                audio.currentTime = 0;
-                audio.muted = false; // Kembalikan volume setelah berhasil di-pause
-            }).catch(error => { 
-                audio.muted = false; 
+// Unlocking Audio Policy Browser (Versi Senyap Anti-Bocor)
+        document.addEventListener('click', function unlockAudioMode() {
+            Object.values(AppState.audio.elements).forEach(audio => {
+                audio.load(); // Cukup disedot ke memori, JANGAN di-play!
             });
-        }
-    });
-    document.removeEventListener('click', unlockAudioMode);
-}, { once: true });
+            document.removeEventListener('click', unlockAudioMode);
+        }, { once: true });
 
         // ==========================================================
         // FUNGSI UTILITAS & UI
@@ -1074,7 +1063,7 @@ if (!isActive) {
             reader.readAsArrayBuffer(file);
         }
 
-     function processImport() {
+       function processImport() {
             const type = document.getElementById('import-type-hidden').value;
             const config = crudConfig[type];
             if (!AppState.db[type]) AppState.db[type] = [];
@@ -1158,6 +1147,7 @@ if (!isActive) {
                 showAlert("Gagal", "Tidak ada baris data valid yang dapat diimpor.", "error");
             }
         }
+
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
         // FUNGSI KEAMANAN: Mencegah injeksi kode jahat (XSS) dari input pengguna/Excel
 function escapeHTML(str) {
@@ -2005,7 +1995,7 @@ function restoreJSON() {
 
         function renderAbsensi(container) {
             let kelasOpts = AppState.db.kelas.map(k => `<option value="${k.id}">${k.kode}</option>`).join('');
-            const nowLocal = new Date();
+           const nowLocal = new Date();
 let today = nowLocal.getFullYear() + '-' + String(nowLocal.getMonth() + 1).padStart(2, '0') + '-' + String(nowLocal.getDate()).padStart(2, '0');
 
             container.innerHTML = `
@@ -3506,7 +3496,16 @@ let today = nowLocal.getFullYear() + '-' + String(nowLocal.getMonth() + 1).padSt
         <i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i> Mode Duel (2 Siswa)
     </button>
 </div>
-
+<!-- PILIHAN DURASI WAKTU KUIS -->
+                        <div>
+                            <label class="text-xs font-bold text-slate-300 block mb-1">⏱️ Durasi Waktu Per Soal</label>
+                            <select id="lobby-durasi" class="w-full p-2.5 rounded-xl bg-slate-800 text-white border border-slate-700 outline-none focus:border-amber-500 text-xs">
+                                <option value="10">10 Detik</option>
+                                <option value="15" selected>15 Detik (Default)</option>
+                                <option value="30">30 Detik</option>
+                                <option value="60">60 Detik</option>
+                            </select>
+                        </div>
                     <div class="space-y-4 text-left">
                         <div>
                             <label class="text-xs font-bold text-slate-300 block mb-1">1. Pilih Kelas</label>
@@ -3654,6 +3653,8 @@ if (AppState.kuis.kelasAktif) {
         function mulaiKuisSebenarnya() {
     const mapelId = document.getElementById('lobby-mapel').value;
     const kelasId = document.getElementById('lobby-kelas').value;
+    const durasiEl = document.getElementById('lobby-durasi');
+    AppState.kuis.durasiPilihan = durasiEl ? parseInt(durasiEl.value) : 15;
 
     // 2. KODE IF YANG SEMPAT TERHAPUS SEBELUMNYA
     if (AppState.kuis.modeKuis === 'single') {
@@ -3745,7 +3746,7 @@ AppState.kuis.skor = 0;
         // =========================================================
         function mulaiTimerKuis(index, score) {
             clearInterval(AppState.kuis.timerInterval);
-            AppState.kuis.sisaWaktu = 15;
+           AppState.kuis.sisaWaktu = AppState.kuis.durasiPilihan || 15;
 
             const timerEl = document.getElementById('timer-kuis');
             const timerContainer = document.getElementById('timer-box-container');
