@@ -1409,7 +1409,7 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
             jurnal: { title: 'Jurnal Harian', fields: [{id:'tanggal', label:'Tanggal', type:'date'}, {id:'kelasId', label:'Kelas', type:'dynamicSelect', source:'kelas', displayField:'kode'}, {id:'mapelId', label:'Mapel', type:'dynamicSelect', source:'mapel', displayField:'nama'}, {id:'materi', label:'Materi Pokok'}] }
         };
 
-      function renderCRUD(container, type) {
+       function renderCRUD(container, type) {
             const config = crudConfig[type];
             let data = AppState.db[type] || [];
             let filterDropdownHtml = '';
@@ -1530,225 +1530,122 @@ else if (tabId === 'pengaturan') renderPengaturan(container);
                 </div>
             `;
         }
-        function editCRUD(type, id) {
-            AppState.ui.editingId = id;
-            renderCRUD(document.getElementById('main-content'), type);
-        }
-
-        function batalEdit(type) {
-            AppState.ui.editingId = null;
-            renderCRUD(document.getElementById('main-content'), type);
-        }
-
-        function saveCRUD(type) {
-            const config = crudConfig[type];
-            if (!AppState.db[type]) AppState.db[type] = [];
-
-            let itemData = {};
-            let hasData = false;
-            
-            config.fields.forEach(f => {
-                const val = document.getElementById(`form-${f.id}`).value;
-                itemData[f.id] = val;
-                if(val.trim() !== '') hasData = true;
-            });
-
-            if(!hasData) return showAlert("Gagal", "Harap isi minimal satu kolom data.", "error");
-
-            if (AppState.ui.editingId) {
-                const idx = AppState.db[type].findIndex(i => i.id === AppState.ui.editingId);
-                if (idx >= 0) {
-                    AppState.db[type][idx] = { ...AppState.db[type][idx], ...itemData };
-                }
-                AppState.ui.editingId = null;
-            } else {
-                AppState.db[type].push({ id: generateId(), ...itemData });
-            }
-            forceSaveNotification();
-        }
-
-        function deleteCRUD(type, id) {
-            if(confirm('Yakin ingin menghapus data ini? Semua data terkait (jadwal/nilai/absensi) juga akan dibersihkan.')) {
-                AppState.db[type] = AppState.db[type].filter(item => item.id !== id);
-
-                if (type === 'kelas') {
-                    AppState.db.siswa = AppState.db.siswa.filter(s => s.kelasId !== id);
-                    AppState.db.jadwal = AppState.db.jadwal.filter(j => j.kelasId !== id);
-                    AppState.db.penilaian = AppState.db.penilaian.filter(p => p.kelasId !== id);
-                    AppState.db.absensi = AppState.db.absensi.filter(a => a.kelasId !== id);
-                    AppState.db.jurnal = AppState.db.jurnal.filter(j => j.kelasId !== id);
-                } else if (type === 'mapel') {
-                    AppState.db.jadwal = AppState.db.jadwal.filter(j => j.mapelId !== id);
-                    AppState.db.penilaian = AppState.db.penilaian.filter(p => p.mapelId !== id);
-                    AppState.db.jurnal = AppState.db.jurnal.filter(j => j.mapelId !== id);
-                } else if (type === 'siswa') {
-                    AppState.db.penilaian = AppState.db.penilaian.filter(p => p.siswaId !== id);
-                    AppState.db.absensi = AppState.db.absensi.filter(a => a.siswaId !== id);
-                }
-
-                if (AppState.ui.editingId === id) AppState.ui.editingId = null;
-                forceSaveNotification();
-            }
-        }
-
-        function toggleSelectAllCRUD(type, isChecked) {
-            const checkboxes = document.querySelectorAll(`.crud-cb-${type}`);
-            checkboxes.forEach(cb => cb.checked = isChecked);
-            updateBatchDeleteUI(type);
-        }
-
-        function updateBatchDeleteUI(type) {
-            const checkedCbs = document.querySelectorAll(`.crud-cb-${type}:checked`);
-            const btn = document.getElementById(`btn-batch-delete-${type}`);
-            const countSpan = document.getElementById(`batch-count-${type}`);
-            const allCbs = document.querySelectorAll(`.crud-cb-${type}`);
-            const selectAllCb = document.getElementById(`select-all-${type}`);
-
-            if (countSpan) countSpan.innerText = checkedCbs.length;
-            if (btn) {
-                if (checkedCbs.length > 0) {
-                    btn.classList.remove('hidden');
-                } else {
-                    btn.classList.add('hidden');
-                }
-            }
-            if (selectAllCb && allCbs.length > 0) {
-                selectAllCb.checked = checkedCbs.length === allCbs.length;
-            }
-        }
-
-        function deleteBatchCRUD(type) {
-            const checkedCbs = document.querySelectorAll(`.crud-cb-${type}:checked`);
-            const idsToDelete = Array.from(checkedCbs).map(cb => cb.value);
-
-            if (idsToDelete.length === 0) return;
-
-            const config = crudConfig[type];
-            if (confirm(`Yakin ingin menghapus ${idsToDelete.length} data ${config ? config.title : ''} terpilih? Data terkait juga akan dibersihkan.`)) {
-                AppState.db[type] = AppState.db[type].filter(item => !idsToDelete.includes(item.id));
-
-                idsToDelete.forEach(id => {
-                    if (type === 'kelas') {
-                        AppState.db.siswa = AppState.db.siswa.filter(s => s.kelasId !== id);
-                        AppState.db.jadwal = AppState.db.jadwal.filter(j => j.kelasId !== id);
-                        AppState.db.penilaian = AppState.db.penilaian.filter(p => p.kelasId !== id);
-                        AppState.db.absensi = AppState.db.absensi.filter(a => a.kelasId !== id);
-                        AppState.db.jurnal = AppState.db.jurnal.filter(j => j.kelasId !== id);
-                    } else if (type === 'mapel') {
-                        AppState.db.jadwal = AppState.db.jadwal.filter(j => j.mapelId !== id);
-                        AppState.db.penilaian = AppState.db.penilaian.filter(p => p.mapelId !== id);
-                        AppState.db.jurnal = AppState.db.jurnal.filter(j => j.mapelId !== id);
-                    } else if (type === 'siswa') {
-                        AppState.db.penilaian = AppState.db.penilaian.filter(p => p.siswaId !== id);
-                        AppState.db.absensi = AppState.db.absensi.filter(a => a.siswaId !== id);
-                    }
-                    if (AppState.ui.editingId === id) AppState.ui.editingId = null;
-                });
-
-                forceSaveNotification();
-            }
-        }
-
-        function exportExcel(type) {
+       function renderCRUD(container, type) {
             const config = crudConfig[type];
             let data = AppState.db[type] || [];
+            let filterDropdownHtml = '';
 
-            // --- SENSOR FILTER KHUSUS DATA SISWA ---
-            // Jika sedang buka Data Siswa dan ada filter kelas yang dipilih, saring datanya dulu!
-            if (type === 'siswa' && AppState.ui.filterKelasSiswa) {
-                data = data.filter(item => item.kelasId === AppState.ui.filterKelasSiswa);
-            }
-            // ---------------------------------------
-
-            if(data.length === 0) return showAlert("Info", "Tidak ada data untuk diekspor pada filter ini.", "info");
-
-            // 1. Susun Judul Kolom (Header)
-            let headers = ['No', ...config.fields.map(f => f.label)];
-            
-            // 2. Susun Isi Baris Data
-            let rows = data.map((item, idx) => {
-                let row = [idx + 1];
-                config.fields.forEach(f => {
-                    let val = item[f.id] || '';
-                    if(f.type === 'dynamicSelect' && val) {
-                        let ref = AppState.db[f.source].find(r => r.id === val);
-                        val = ref ? ref[f.displayField] : val;
-                    }
-                    // Bersihkan tag HTML jika ada agar Excel bersih
-                    if (typeof val === 'string') {
-                        val = val.replace(/<[^>]*>?/gm, '');
-                    }
-                    row.push(val);
-                });
-                return row;
-            });
-
-            // 3. Gabungkan Header dan Data
-            let dataToExport = [headers, ...rows];
-
-            // 4. Proses menjadi format Excel (.xlsx) menggunakan SheetJS
-            const worksheet = XLSX.utils.aoa_to_sheet(dataToExport);
-            
-            // Atur lebar kolom otomatis
-            const wscols = [{wch: 5}]; 
-            config.fields.forEach(() => wscols.push({wch: 25})); 
-            worksheet['!cols'] = wscols;
-
-            const workbook = XLSX.utils.book_new();
-            
-            // --- PENAMAAN FILE OTOMATIS CERDAS ---
-            let namaSheet = `Data_${config.title}`;
-            let namaFile = `Data_${config.title}_SmartTeacher.xlsx`;
-            
-            // Jika yang diekspor siswa kelas tertentu, ubah nama filenya!
-            if (type === 'siswa' && AppState.ui.filterKelasSiswa) {
-                const refKelas = AppState.db.kelas.find(k => k.id === AppState.ui.filterKelasSiswa);
-                if (refKelas) {
-                    // Pastikan nama sheet tidak lebih dari 31 karakter (aturan wajib Excel)
-                    namaSheet = `Siswa_Kelas_${refKelas.kode}`.substring(0, 31);
-                    namaFile = `Data_Siswa_Kelas_${refKelas.kode}_SmartTeacher.xlsx`;
+            if (type === 'siswa') {
+                const currentFilter = AppState.ui.filterKelasSiswa || '';
+                const opsiKelas = AppState.db.kelas.map(k => `<option value="${k.id}" ${currentFilter === k.id ? 'selected' : ''}>${k.kode}</option>`).join('');
+                
+                filterDropdownHtml = `
+                    <select onchange="AppState.ui.filterKelasSiswa = this.value; renderCRUD(document.getElementById('main-content'), '${type}')" class="flex-1 sm:flex-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition-all outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Semua Kelas --</option>
+                        ${opsiKelas}
+                    </select>
+                `;
+                
+                if (currentFilter) {
+                    data = data.filter(item => item.kelasId === currentFilter);
                 }
             }
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, namaSheet);
-            XLSX.writeFile(workbook, namaFile);
             
-            showAlert("Berhasil", `File Excel ${namaSheet} berhasil diunduh!`, "success");
-        }
+            const dataAsliUtuh = AppState.db[type] || []; 
+            const kamusRelasi = {};
+            config.fields.forEach(f => {
+                if (f.type === 'dynamicSelect') {
+                    kamusRelasi[f.source] = {};
+                    (AppState.db[f.source] || []).forEach(r => {
+                        kamusRelasi[f.source][r.id] = r;
+                    });
+                }
+            });
 
-        function renderPengaturan(container) {
-            container.innerHTML = `
-                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 lg:p-8 max-w-3xl mx-auto">
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-6 border-b dark:border-slate-800 pb-4"><i class="fa-solid fa-shield-halved text-brand-500 mr-2"></i>Pengaturan Sistem</h3>
+            let tableRows = data.length === 0 
+                ? `<tr><td colspan="${config.fields.length+3}" class="text-center py-12 text-slate-400 font-medium text-sm">Belum ada data ${config.title}.</td></tr>`
+                : data.map((item, idx) => {
+                    let tdFields = config.fields.map(f => {
+                        let val = item[f.id] || '-';
+                        if(f.type === 'dynamicSelect') {
+                            const ref = kamusRelasi[f.source] ? kamusRelasi[f.source][item[f.id]] : null;
+                            val = ref ? ref[f.displayField] : (item[f.id] || '<span class="text-rose-400 font-semibold italic">Belum diatur</span>');
+                        }
+                        let amanVal = String(val).includes('<span class="text-rose-400') ? val : escapeHTML(val);
+                        return `<td class="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 max-w-[180px] truncate">${amanVal}</td>`;
+                    }).join('');
                     
+                    return `
+                    <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-brand-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-4 px-4 text-center"><input type="checkbox" value="${item.id}" onchange="updateBatchDeleteUI('${type}')" class="crud-cb-${type} w-4 h-4 accent-brand-600 rounded cursor-pointer"></td>
+                        <td class="py-4 px-4 text-sm font-bold text-slate-500">${idx+1}</td>
+                        ${tdFields}
+                        <td class="py-4 px-4 text-right whitespace-nowrap">
+                            ${type === 'siswa' ? `<button onclick="lihatQRSiswa('${item.id}')" title="Lihat QR Code" class="text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 py-2.5 px-3.5 rounded-xl transition-all mr-1"><i class="fa-solid fa-qrcode text-base"></i></button>` : ''}
+                            <button onclick="editCRUD('${type}', '${item.id}')" title="Edit Data" class="text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-950/50 py-2.5 px-3.5 rounded-xl transition-all mr-1"><i class="fa-solid fa-pen-to-square text-base"></i></button>
+                            <button onclick="deleteCRUD('${type}', '${item.id}')" title="Hapus Data" class="text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-950/50 py-2.5 px-3.5 rounded-xl transition-all"><i class="fa-solid fa-trash-can text-base"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            
+            const editingItem = AppState.ui.editingId ? dataAsliUtuh.find(i => i.id === AppState.ui.editingId) : null;
 
-                    <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
-                        <div class="text-3xl text-emerald-500"><i class="fa-solid fa-cloud"></i></div>
-                        <div class="w-full">
-                            <h4 class="font-bold text-emerald-800 dark:text-emerald-300 text-lg">Sinkronisasi Cloud (Google Sheets)</h4>
-                            <p class="text-sm text-emerald-700 dark:text-emerald-400 mb-3 mt-1">Masukkan Web App URL agar data tersimpan secara online.</p>
-                           <input type="text" id="setting-gas-url" readonly value="${getActiveWorkspace().url || ''}" placeholder="Belum ada URL Database di Ruang Kerja ini" class="w-full bg-slate-100 dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-xl px-4 py-2.5 text-sm outline-none mb-3 text-slate-500 cursor-not-allowed">
-<p class="text-xs text-slate-500 dark:text-slate-400 italic">*Tautan ini diambil secara otomatis dari pengaturan Ruang Kerja. Untuk mengubahnya, silakan buat/edit Ruang Kerja di menu samping.</p>
+            let formFields = config.fields.map(f => {
+                let currentVal = editingItem ? (editingItem[f.id] || '') : '';
+                let inputHtml = '';
+                if(f.type === 'select') {
+                    let opts = f.opts.map(o => `<option value="${o}" ${currentVal === o ? 'selected' : ''}>${o}</option>`).join('');
+                    inputHtml = `<select id="form-${f.id}" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500 dark:text-white text-sm shadow-sm">${opts}</select>`;
+                } else if(f.type === 'dynamicSelect') {
+                    let opts = (AppState.db[f.source] || []).map(o => `<option value="${o.id}" ${currentVal === o.id ? 'selected' : ''}>${o[f.displayField]}</option>`).join('');
+                    inputHtml = `<select id="form-${f.id}" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500 dark:text-white text-sm shadow-sm"><option value="">-- Pilih --</option>${opts}</select>`;
+                } else if(f.type === 'date' || f.type === 'time') {
+                    inputHtml = `<input type="${f.type}" id="form-${f.id}" value="${currentVal}" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500 dark:text-white text-sm shadow-sm">`;
+                } else {
+                    inputHtml = `<input type="text" id="form-${f.id}" value="${currentVal}" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500 dark:text-white text-sm shadow-sm">`;
+                }
+                return `<div><label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">${f.label}</label>${inputHtml}</div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                    <div class="xl:col-span-4 bg-white dark:bg-slate-900 rounded-[2rem] shadow-md border border-slate-100 dark:border-slate-800 p-6 sm:p-8 h-full flex flex-col justify-between">
+                        <h4 class="font-black text-lg text-slate-800 dark:text-white mb-6 border-b dark:border-slate-800 pb-4">
+                            ${editingItem ? `<i class="fa-solid fa-pen-to-square text-amber-500 mr-2"></i>Edit ${config.title}` : `<i class="fa-solid fa-plus-circle text-brand-500 mr-2"></i>Tambah ${config.title}`}
+                        </h4>
+                        <div class="space-y-5" id="crud-form">${formFields}</div>
+                        <div class="flex space-x-3 mt-8">
+                            ${editingItem ? `<button onclick="batalEdit('${type}')" class="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3.5 rounded-xl transition-all shadow-sm">Batal</button>` : ''}
+                            <button onclick="saveCRUD('${type}')" class="flex-1 ${editingItem ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30' : 'bg-brand-600 hover:bg-brand-500 shadow-brand-500/30'} text-white font-black py-3.5 rounded-xl shadow-lg transition-transform active:scale-95">
+                                ${editingItem ? 'Simpan Edit' : 'Simpan Data'}
+                            </button>
                         </div>
                     </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-2xl p-5 mb-6 flex items-start space-x-4">
-                        <div class="text-3xl text-blue-500"><i class="fa-solid fa-cloud-arrow-down"></i></div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 dark:text-white text-lg">Backup Database Lengkap</h4>
-                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 mt-1">Unduh seluruh data menjadi satu file JSON.</p>
-                            <button onclick="backupJSON()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-md">Download Backup JSON</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 flex items-start space-x-4">
-                        <div class="text-3xl text-amber-500"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                        <div class="w-full">
-                            <h4 class="font-bold text-slate-800 dark:text-white text-lg">Restore Database (Pemulihan)</h4>
-                            <div class="flex items-center space-x-3 w-full mt-4">
-                                <input type="file" id="restore-file" accept=".json" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-sm cursor-pointer dark:text-white">
-                                <button onclick="restoreJSON()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-md">Restore Data</button>
+                    
+                    <div class="xl:col-span-8 bg-white dark:bg-slate-900 rounded-[2rem] shadow-md border border-slate-100 dark:border-slate-800 overflow-hidden">
+                        <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 gap-4">
+                            <h4 class="font-black text-lg text-slate-800 dark:text-white"><i class="fa-solid fa-table-list mr-2 text-indigo-500"></i>Daftar ${config.title}</h4>
+                            <div class="flex flex-wrap gap-2 w-full xl:w-auto">
+                                ${filterDropdownHtml}
+                                <button id="btn-batch-delete-${type}" onclick="deleteBatchCRUD('${type}')" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow-md transition-all flex items-center shrink-0">
+                                    <i class="fa-solid fa-trash-can mr-2"></i> Hapus (<span id="batch-count-${type}">0</span>)
+                                </button>
+                               <button onclick="exportExcel('${type}')" class="flex-1 sm:flex-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-emerald-600 hover:border-emerald-300 font-bold py-2.5 px-4 rounded-xl text-sm shadow-sm transition-all"><i class="fa-solid fa-file-excel mr-1.5 text-emerald-500"></i> Ekspor Excel</button>
+                                <button onclick="openImportModal('${type}')" class="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow-md shadow-purple-500/30 transition-all"><i class="fa-solid fa-file-excel mr-1.5"></i> Impor Excel</button>
                             </div>
+                        </div>
+                        <div class="overflow-x-auto p-2 custom-scrollbar max-h-[75vh] overflow-y-auto relative">
+                            <table class="w-full text-left border-collapse min-w-max">
+                                <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-extrabold sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th class="py-4 px-4 w-12 text-center rounded-l-xl"><input type="checkbox" id="select-all-${type}" onchange="toggleSelectAllCRUD('${type}', this.checked)" class="w-4 h-4 accent-brand-600 rounded cursor-pointer" title="Pilih Semua"></th>
+                                        <th class="py-4 px-4 w-14 text-center">No</th>
+                                        ${config.fields.map(f => `<th class="py-4 px-4">${f.label}</th>`).join('')}
+                                        <th class="py-4 px-4 text-right rounded-r-xl">Aksi Opsi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -2861,8 +2758,7 @@ let today = nowLocal.getFullYear() + '-' + String(nowLocal.getMonth() + 1).padSt
                         <button onclick="changeAITab('soal')" class="flex-1 py-2 px-3 rounded-xl font-bold transition-all text-xs ${AppState.ui.aiTab==='soal'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-file-signature mr-1"></i>Soal Ujian</button>
                         <button onclick="changeAITab('tp')" class="flex-1 py-2 px-3 rounded-xl font-bold transition-all text-xs ${AppState.ui.aiTab==='tp'?'bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-300 shadow-sm':'text-slate-500 dark:text-slate-400'}"><i class="fa-solid fa-layer-group mr-1"></i>TP & ATP</button>
                    </div>
-    <div id="ai-workspace" class="min-h-[260px]"></div>     
-                    <div id="ai-workspace" class="min-h-[260px]"></div>
+                   <div id="ai-workspace" class="min-h-[260px]"></div>
                 `;
                 setTimeout(() => renderAIWorkspace(), 10);
             }
