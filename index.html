@@ -5990,6 +5990,19 @@ function simpanWorkspaceBaru() {
 // KONFIGURASI SERVER PUSAT GATEWAY (DITANAM / HARDCODE)
 // =========================================================================
 const URL_GATEWAY_PUSAT = "https://script.google.com/macros/s/AKfycbzcHLMR_oS83RcSUucJ5PWEkD7MxIAkNf_vQ-tDOHaUeJ-AelGf0KmPZTCW9EGyEHxJ/exec";
+    const URL_GATEWAY_PUSAT = "https://script.google.com/macros/s/AKfycbzCHLMR_oS83RCSUucJ5PWEkD7MXI..."
+
+    // JARING PENGAMAN: Mencegah error saat cache browser dihapus
+    let savedUrl = localStorage.getItem('ST_GAS_URL');
+    if (!savedUrl || savedUrl === "") {
+        savedUrl = URL_GATEWAY_PUSAT; 
+        localStorage.setItem('ST_GAS_URL', savedUrl);
+        console.log("Memori dibersihkan. URL berhasil dipulihkan otomatis ke Pusat.");
+    }
+
+    // Registrasi PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
     // Registrasi PWA Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
