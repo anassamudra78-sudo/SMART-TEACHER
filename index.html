@@ -5805,13 +5805,21 @@ if (workspaces.length === 0) {
 }
 
 function simpanWsKeStorage() {
-    // 1. Simpan ke memori tablet (Kode asli Anda tetap berjalan)
+    // 1. Simpan ke memori tablet (Kode asli)
     localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
     localStorage.setItem('ST_ACTIVE_WS_ID', activeWsId);
 
-    // 2. Minta identitas pengenal untuk pencadangan di Database Pusat
-    let idGuru = prompt("Masukkan Nama Anda untuk pencadangan Ruang Kerja di Server Pusat\n(Contoh: Pak Anas / Kelas 8A):", "Pak Anas");
-    if (!idGuru) idGuru = "Guru_Anonim"; // Tetap jalan meskipun kolom identitas dikosongkan
+    // 2. CEK MEMORI: Apakah nama guru sudah pernah didaftarkan di tablet ini?
+    let idGuru = localStorage.getItem('ST_ID_GURU');
+
+    // Jika belum ada di memori, BARU munculkan pop-up pertanyaan
+    if (!idGuru || idGuru === "") {
+        idGuru = prompt("Masukkan Nama Anda untuk pencadangan Ruang Kerja di Server Pusat\n(Contoh: Pak Anas / Kelas 8A):", "Pak Anas");
+        if (!idGuru) idGuru = "Guru_Anonim"; 
+        
+        // Simpan nama tersebut ke memori tablet agar tidak ditanya lagi saat pindah ruang kerja
+        localStorage.setItem('ST_ID_GURU', idGuru);
+    }
 
     // 3. Kirim salinan data ke Database Pusat secara senyap di latar belakang
     let dataBackup = JSON.stringify(workspaces);
@@ -5824,7 +5832,7 @@ function simpanWsKeStorage() {
         console.error("Tersimpan di Tablet. Koneksi pencadangan tertunda:", error);
     });
 }
-function getActiveWorkspace() {
+    function getActiveWorkspace() {
     return workspaces.find(w => w.id === activeWsId) || workspaces[0];
 }
 
