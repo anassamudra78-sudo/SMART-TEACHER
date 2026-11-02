@@ -5805,10 +5805,25 @@ if (workspaces.length === 0) {
 }
 
 function simpanWsKeStorage() {
+    // 1. Simpan ke memori tablet (Kode asli Anda tetap berjalan)
     localStorage.setItem('ST_WORKSPACES', JSON.stringify(workspaces));
     localStorage.setItem('ST_ACTIVE_WS_ID', activeWsId);
-}
 
+    // 2. Minta identitas pengenal untuk pencadangan di Database Pusat
+    let idGuru = prompt("Masukkan Nama Anda untuk pencadangan Ruang Kerja di Server Pusat\n(Contoh: Pak Anas / Kelas 8A):", "Pak Anas");
+    if (!idGuru) idGuru = "Guru_Anonim"; // Tetap jalan meskipun kolom identitas dikosongkan
+
+    // 3. Kirim salinan data ke Database Pusat secara senyap di latar belakang
+    let dataBackup = JSON.stringify(workspaces);
+    fetch(URL_GATEWAY_PUSAT + "?action=simpanWorkspace&id=" + encodeURIComponent(idGuru) + "&link=" + encodeURIComponent(dataBackup))
+    .then(response => response.json())
+    .then(data => {
+        console.log("Salinan Ruang Kerja berhasil diamankan ke Database Pusat.");
+    })
+    .catch(error => {
+        console.error("Tersimpan di Tablet. Koneksi pencadangan tertunda:", error);
+    });
+}
 function getActiveWorkspace() {
     return workspaces.find(w => w.id === activeWsId) || workspaces[0];
 }
