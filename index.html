@@ -1090,8 +1090,8 @@ if (!isActive) {
                     let isValid = false;
 
                     config.fields.forEach((f, index) => {
-                        // PERBAIKAN FATAL: Pakai index + 1 untuk melompati kolom "No" di Excel
-                        let val = cols[index + 1] !== undefined && cols[index + 1] !== null ? String(cols[index + 1]).trim() : '';
+                        // PERBAIKAN: Gunakan index langsung, hapus + 1 yang bikin bergeser
+                        let val = cols[index] !== undefined && cols[index] !== null ? String(cols[index]).trim() : '';
                         if (val !== '') isValid = true;
 
                         if (f.type === 'dynamicSelect' && val !== '') {
@@ -1123,8 +1123,8 @@ if (!isActive) {
                         let isValid = false;
 
                         config.fields.forEach((f, index) => {
-                            // PERBAIKAN FATAL: Pakai index + 1 untuk melompati kolom "No" di teks Paste
-                            let val = cols[index + 1] ? cols[index + 1].trim().replace(/^"|"$/g, '') : '';
+                            // PERBAIKAN: Gunakan index langsung, hapus + 1 yang bikin bergeser
+                            let val = cols[index] ? cols[index].trim().replace(/^"|"$/g, '') : '';
                             if (val !== '') isValid = true;
                             if (f.type === 'dynamicSelect' && val !== '') {
                                 let ref = (AppState.db[f.source] || []).find(r => 
@@ -1153,7 +1153,7 @@ if (!isActive) {
                 showAlert("Gagal", "Tidak ada baris data valid yang dapat diimpor.", "error");
             }
         }
-
+        
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
         // FUNGSI KEAMANAN: Mencegah injeksi kode jahat (XSS) dari input pengguna/Excel
 function escapeHTML(str) {
