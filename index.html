@@ -5414,8 +5414,7 @@ const targetData = `${siswa.nis || siswa.id}|${siswa.nama}|${namaKelas}`;
                 
             dataGateway.forEach(absenGerbang => {
                 if (absenGerbang.nis && absenGerbang.tanggal) {
-                    const siswaMatch = siswaKelas.find(s => String(s.nis) === String(absenGerbang.nis));
-                    
+                    const siswaMatch = siswaKelas.find(s => String(s.nis).replace(/^0+/, '') === String(absenGerbang.nis).replace(/^0+/, ''));                    
                     if (siswaMatch) {
                         const idx = AppState.db.absensi.findIndex(a => 
                             a.siswaId === siswaMatch.id && 
